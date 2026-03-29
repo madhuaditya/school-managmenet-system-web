@@ -1,6 +1,12 @@
 import apiClient from '../apiClient';
 
 export const subjectService = {
+  // Get subjects by class
+  getSubjectsByClass: async (classId) => {
+    const response = await apiClient.get(`/api/subject/class/${classId}`);
+    return response.data;
+  },
+
   // Get all subjects
   getSubjects: async () => {
     const response = await apiClient.get('/api/subject/all');
