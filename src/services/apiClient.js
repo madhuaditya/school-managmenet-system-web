@@ -1,9 +1,13 @@
 import axios from 'axios';
 
+const baseURL = new String(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000').replace(/\/+$/, '');
+
+console.log('API Client initialized with baseURL:', baseURL);
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: baseURL,
   timeout: 12000,
   headers: {
     'Content-Type': 'application/json',
@@ -12,6 +16,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
   try {
+    console.log('API Client initialized with baseURL:', baseURL);
     const rawStore = localStorage.getItem('school-web-auth-store');
     if (!rawStore) return config;
 
