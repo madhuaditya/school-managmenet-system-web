@@ -13,7 +13,7 @@ export const CONTACT_DETAILS = {
 };
 
 export const APP_LINKS = {
-  android: '#',
+  android: 'https://expo.dev/artifacts/eas/eJoGtv3GsHJWDJzQEmv8yc.apk',
   ios: '#',
 };
 
