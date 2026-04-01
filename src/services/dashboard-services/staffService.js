@@ -3,7 +3,7 @@ import apiClient from '../apiClient';
 export const staffService = {
   // Get all staff
   getStaff: async () => {
-    const response = await apiClient.get('/api/staff');
+    const response = await apiClient.get('/api/auth/staff/all');
     return response.data;
   },
 

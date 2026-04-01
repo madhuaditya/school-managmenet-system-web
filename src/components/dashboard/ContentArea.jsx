@@ -20,6 +20,14 @@ import AttendanceMarkForm from '../dashboard-menus/attendance/AttendanceMarkForm
 import MyAttendance from '../dashboard-menus/attendance/MyAttendance';
 import PerformanceForm from '../dashboard-menus/performance/PerformanceForm';
 import NoticesList from '../dashboard-menus/notices/NoticesList';
+import FeeStructureList from '../dashboard-menus/fees/FeeStructureList';
+import FeeMatrix from '../dashboard-menus/fees/FeeMatrix';
+import FeeRecordsManager from '../dashboard-menus/fees/FeeRecordsManager';
+import FeePaymentsManager from '../dashboard-menus/fees/FeePaymentsManager';
+import SalaryStructureList from '../dashboard-menus/salary/SalaryStructureList';
+import SalaryMatrix from '../dashboard-menus/salary/SalaryMatrix';
+import CreateAlert from '../dashboard-menus/alerts/CreateAlert';
+import MyAlerts from '../dashboard-menus/alerts/MyAlerts';
 import ProfileView from '../dashboard-menus/profile/ProfileView';
 import AddUser from '../dashboard-menus/users/AddUser';
 
@@ -37,6 +45,14 @@ const componentMap = {
   MyAttendance,
   PerformanceForm,
   NoticesList,
+  FeeStructureList,
+  FeeMatrix,
+  FeeRecordsManager,
+  FeePaymentsManager,
+  SalaryStructureList,
+  SalaryMatrix,
+  CreateAlert,
+  MyAlerts,
   ProfileView,
   AddUser,
   AdminList
@@ -53,6 +69,14 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
     adduser: 'AddUser',
     classes: 'ClassesList',
     subjects: 'SubjectsList',
+    'fee-structure': 'FeeStructureList',
+    'fee-matrix': 'FeeMatrix',
+    'fee-records': 'FeeRecordsManager',
+    'fee-payments': 'FeePaymentsManager',
+    'salary-structure': 'SalaryStructureList',
+    'salary-matrix': 'SalaryMatrix',
+    'create-alert': 'CreateAlert',
+    'my-alerts': 'MyAlerts',
     attendance: 'AttendanceMarkForm',
     performance: 'PerformanceForm',
     notices: 'NoticesList',

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Calendar, Check, ChevronLeft, ChevronRight, X } from 'react-feather';
+import { ChevronLeft, ChevronRight } from 'react-feather';
 import { useSearchParams } from 'react-router-dom';
 import attendanceService from '../../../services/dashboard-services/attendanceService';
+import apiClient from '../../../services/apiClient';
 import {useAuthStore} from '../../../stores/authStore';
 const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = [
@@ -23,14 +24,14 @@ const AttendanceMarkForm = ({ targetId }) => {
   const user = useAuthStore((state) => state.profile);
   const [searchParams] = useSearchParams();
   const memberId = targetId || searchParams.get('id') || user?._id || '';
-console.log('AttendanceMarkForm initialized with memberId:', memberId);
+// console.log('AttendanceMarkForm initialized with memberId:', memberId);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [records, setRecords] = useState([]);
   const [summary, setSummary] = useState(null);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [message, setMessage] = useState(null);
+  const [memberInfo, setMemberInfo] = useState({ name: '', email: '' });
 
   const daysInMonth = useMemo(() => new Date(year, month, 0).getDate(), [year, month]);
   const firstWeekday = useMemo(() => new Date(year, month - 1, 1).getDay(), [year, month]);
@@ -83,6 +84,30 @@ console.log('AttendanceMarkForm initialized with memberId:', memberId);
     fetchAttendance();
   }, [memberId, month, year]);
 
+  useEffect(() => {
+    if (!memberId) return;
+
+    const loadMemberInfo = async () => {
+      try {
+        if (user?._id === memberId) {
+          setMemberInfo({ name: user?.name || '', email: user?.email || '' });
+          return;
+        }
+
+        const res = await apiClient.get(`/api/profile/${memberId}`);
+        const profile = res?.data?.data || {};
+        setMemberInfo({
+          name: profile?.name || '',
+          email: profile?.email || '',
+        });
+      } catch {
+        setMemberInfo({ name: '', email: '' });
+      }
+    };
+
+    loadMemberInfo();
+  }, [memberId, user?._id, user?.name, user?.email]);
+
   const fetchAttendance = async () => {
     try {
       setLoading(true);
@@ -101,41 +126,6 @@ console.log('AttendanceMarkForm initialized with memberId:', memberId);
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchTodayStatus = async () => {
-    try {
-      const res = await attendanceService.getTodayAttendance(memberId);
-      const attendanceList = Array.isArray(res?.data?.attendance) ? res.data.attendance : [];
-      return attendanceList[0]?.status || null;
-    } catch {
-      return null;
-    }
-  };
-
-  const markForToday = async (status) => {
-    try {
-      setSubmitting(true);
-      setMessage(null);
-      const todayDate = new Date().toISOString().slice(0, 10);
-      const todayStatus = await fetchTodayStatus();
-      const payload = { userId: memberId, date: todayDate, status };
-
-      const res = todayStatus
-        ? await attendanceService.updateAttendance(payload)
-        : await attendanceService.markAttendance(payload);
-
-      if (!res?.success) {
-        throw new Error(res?.msg || 'Failed to save attendance');
-      }
-
-      setMessage({ type: 'success', text: `Attendance marked ${status} for today.` });
-      await fetchAttendance();
-    } catch (error) {
-      setMessage({ type: 'error', text: error?.message || 'Failed to save attendance' });
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -200,31 +190,10 @@ console.log('AttendanceMarkForm initialized with memberId:', memberId);
         </div>
       )}
 
-      <div className="mb-4 grid grid-cols-3 gap-2">
-        <button
-          type="button"
-          disabled={submitting}
-          onClick={() => markForToday('present')}
-          className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <Check size={14} /> Present
-        </button>
-        <button
-          type="button"
-          disabled={submitting}
-          onClick={() => markForToday('absent')}
-          className="inline-flex items-center justify-center gap-1 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <X size={14} /> Absent
-        </button>
-        <button
-          type="button"
-          disabled={submitting}
-          onClick={() => markForToday('leave')}
-          className="inline-flex items-center justify-center gap-1 rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <Calendar size={14} /> Leave
-        </button>
+      <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4">
+        <h2 className="mb-2 text-base font-bold text-slate-900">User Info</h2>
+        <p className="text-sm text-slate-600">Name: {memberInfo?.name || 'N/A'}</p>
+        <p className="text-sm text-slate-600">Email: {memberInfo?.email || 'N/A'}</p>
       </div>
 
       <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2">
@@ -320,7 +289,7 @@ console.log('AttendanceMarkForm initialized with memberId:', memberId);
       </div>
 
       <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="mb-2 text-base font-bold text-slate-900">API Summary</h2>
+        <h2 className="mb-2 text-base font-bold text-slate-900">Summary</h2>
         <p className="text-sm text-slate-600">Total Marked: {summary?.total ?? computed.marked}</p>
         <p className="text-sm text-slate-600">Present: {summary?.present ?? computed.present}</p>
         <p className="text-sm text-slate-600">Absent: {summary?.absent ?? computed.absent}</p>
