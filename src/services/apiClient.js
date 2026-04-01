@@ -16,7 +16,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
   try {
-    console.log('API Client initialized with baseURL:', baseURL);
+    // console.log('API Client initialized with baseURL:', baseURL);
     const rawStore = localStorage.getItem('school-web-auth-store');
     if (!rawStore) return config;
 

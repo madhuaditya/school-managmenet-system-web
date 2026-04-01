@@ -26,6 +26,8 @@ import FeeRecordsManager from '../dashboard-menus/fees/FeeRecordsManager';
 import FeePaymentsManager from '../dashboard-menus/fees/FeePaymentsManager';
 import SalaryStructureList from '../dashboard-menus/salary/SalaryStructureList';
 import SalaryMatrix from '../dashboard-menus/salary/SalaryMatrix';
+import SalaryRecordsManager from '../dashboard-menus/salary/SalaryRecordsManager';
+import MySalary from '../dashboard-menus/salary/MySalary';
 import CreateAlert from '../dashboard-menus/alerts/CreateAlert';
 import MyAlerts from '../dashboard-menus/alerts/MyAlerts';
 import ProfileView from '../dashboard-menus/profile/ProfileView';
@@ -51,6 +53,8 @@ const componentMap = {
   FeePaymentsManager,
   SalaryStructureList,
   SalaryMatrix,
+  SalaryRecordsManager,
+  MySalary,
   CreateAlert,
   MyAlerts,
   ProfileView,
@@ -75,6 +79,8 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
     'fee-payments': 'FeePaymentsManager',
     'salary-structure': 'SalaryStructureList',
     'salary-matrix': 'SalaryMatrix',
+    'salary-records': 'SalaryRecordsManager',
+    'my-salary': 'MySalary',
     'create-alert': 'CreateAlert',
     'my-alerts': 'MyAlerts',
     attendance: 'AttendanceMarkForm',
