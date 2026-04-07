@@ -33,6 +33,7 @@ const FeeMatrix = () => {
   }, []);
 
   useEffect(() => {
+    console.log('View mode or filters changed:', { viewMode, month, year, classId });
     if (viewMode === 'class' || viewMode === 'yearly') {
       if (!classId) return;
     }
@@ -214,11 +215,11 @@ const FeeMatrix = () => {
     if (!matrixData || viewMode === 'yearly') return null;
 
     let paid = 0;
-    matrixData?.classWiseBreakdown.forEach((item) =>  paid += item?.paidCount || 0);
+    matrixData?.classWiseBreakdown?.forEach((item) =>  paid += item?.paidCount || 0);
     let partial = 0;
-    matrixData?.classWiseBreakdown.forEach((item) => partial += item?.partialCount || 0);
+    matrixData?.classWiseBreakdown?.forEach((item) => partial += item?.partialCount || 0);
     let pending = 0;
-    matrixData?.classWiseBreakdown.forEach((item) => pending += item?.pendingCount || 0);
+    matrixData?.classWiseBreakdown?.forEach((item) => pending += item?.pendingCount || 0);
 
     return {
       chart: { type: 'pie', backgroundColor: 'transparent' },
@@ -334,15 +335,15 @@ const FeeMatrix = () => {
           <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase text-slate-500">Total Records</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{totals?.records || 0}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{Math.round(totals?.records || 0)}</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase text-slate-500">Collected</p>
-              <p className="mt-1 text-2xl font-bold text-emerald-700">{totals?.collected || 0}</p>
+              <p className="mt-1 text-2xl font-bold text-emerald-700">{Math.floor(totals?.collected || 0)}</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase text-slate-500">Due</p>
-              <p className="mt-1 text-2xl font-bold text-rose-700">{totals?.due || 0}</p>
+              <p className="mt-1 text-2xl font-bold text-rose-700">{Math.floor(totals?.due || 0)}</p>
             </div>
           </section>
 
