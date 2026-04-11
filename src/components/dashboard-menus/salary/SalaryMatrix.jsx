@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReactModule from 'highcharts-react-official';
 import { TableSkeleton } from '../_shared/Skeleton';
+import { formatMoney } from '../_shared/money';
 import staffService from '../../../services/dashboard-services/staffService';
 import adminService from '../../../services/dashboard-services/adminService';
 import teachersService from '../../../services/dashboard-services/teacherService';
@@ -322,15 +323,15 @@ const SalaryMatrix = () => {
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase text-slate-500">Payable</p>
-              <p className="mt-1 text-2xl font-bold text-blue-700">{totals?.payable || 0}</p>
+              <p className="mt-1 text-2xl font-bold text-blue-700">{formatMoney(totals?.payable || 0)}</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase text-slate-500">Paid</p>
-              <p className="mt-1 text-2xl font-bold text-emerald-700">{totals?.paid || 0}</p>
+              <p className="mt-1 text-2xl font-bold text-emerald-700">{formatMoney(totals?.paid || 0)}</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase text-slate-500">Pending</p>
-              <p className="mt-1 text-2xl font-bold text-rose-700">{totals?.pending || 0}</p>
+              <p className="mt-1 text-2xl font-bold text-rose-700">{formatMoney(totals?.pending || 0)}</p>
             </div>
           </section>
 

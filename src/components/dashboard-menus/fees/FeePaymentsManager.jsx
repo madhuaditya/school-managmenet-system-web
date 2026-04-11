@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { TableSkeleton } from '../_shared/Skeleton';
+import { formatMoney, normalizeMoneyInput } from '../_shared/money';
 import classService from '../../../services/dashboard-services/classService';
 import feeManagementService from '../../../services/dashboard-services/feeManagementService';
 
@@ -35,6 +36,11 @@ const FeePaymentsManager = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  const toMoney = (value) => {
+    const amount = Number(value);
+    return Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0;
+  };
 
   useEffect(() => {
     loadClasses();
@@ -172,7 +178,7 @@ const FeePaymentsManager = () => {
       feeRecords
         .map((record) => ({
           id: record?._id,
-          label: `${record?.month}/${record?.year} - Due ${record?.dueAmount ?? 0} (${record?.status || 'PENDING'})`,
+          label: `${record?.month}/${record?.year} - Due ${formatMoney(record?.dueAmount || 0)} (${record?.status || 'PENDING'})`,
         }))
         .filter((item) => item.id),
     [feeRecords]
@@ -249,8 +255,8 @@ const FeePaymentsManager = () => {
 
       const payload = {
         feeRecordId: selectedFeeRecordId,
-        amount: Number(form.amount),
-        lateFee: Number(form.lateFee || 0),
+        amount: toMoney(form.amount),
+        lateFee: toMoney(form.lateFee || 0),
         method: form.method,
         transactionId: form.transactionId?.trim() || '',
         remarks: form.remarks?.trim() || '',
@@ -357,9 +363,9 @@ const FeePaymentsManager = () => {
         {selectedRecord ? (
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
             <p className="font-semibold text-slate-900">Selected Record Details</p>
-            <p>Total Fee: {selectedRecord?.totalFee ?? 0}</p>
-            <p>Paid Amount: {selectedRecord?.paidAmount ?? 0}</p>
-            <p>Due Amount: {selectedRecord?.dueAmount ?? 0}</p>
+            <p>Total Fee: {formatMoney(selectedRecord?.totalFee)}</p>
+            <p>Paid Amount: {formatMoney(selectedRecord?.paidAmount)}</p>
+            <p>Due Amount: {formatMoney(selectedRecord?.dueAmount)}</p>
             <p>Status: {selectedRecord?.status || 'PENDING'}</p>
           </div>
         ) : null}
@@ -378,7 +384,7 @@ const FeePaymentsManager = () => {
                 step="0.01"
                 value={form.amount}
                 onChange={(event) => {
-                  setForm((prev) => ({ ...prev, amount: event.target.value }));
+                  setForm((prev) => ({ ...prev, amount: normalizeMoneyInput(event.target.value) }));
                   clearFieldError('amount');
                 }}
                 className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -394,7 +400,7 @@ const FeePaymentsManager = () => {
                 step="0.01"
                 value={form.lateFee}
                 onChange={(event) => {
-                  setForm((prev) => ({ ...prev, lateFee: event.target.value }));
+                  setForm((prev) => ({ ...prev, lateFee: normalizeMoneyInput(event.target.value) }));
                   clearFieldError('lateFee');
                 }}
                 className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -468,10 +474,10 @@ const FeePaymentsManager = () => {
                 key={payment?._id}
                 className="rounded-xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-4 text-sm text-slate-700"
               >
-                <p className="text-base font-bold text-slate-900">Amount: {payment?.amount ?? 0}</p>
+                <p className="text-base font-bold text-slate-900">Amount: {formatMoney(payment?.amount)}</p>
                 <p>Method: {payment?.method || '-'}</p>
                 <p>Status: {payment?.status || '-'}</p>
-                <p>Late Fee: {payment?.lateFee ?? 0}</p>
+                <p>Late Fee: {formatMoney(payment?.lateFee)}</p>
                 <p>Transaction ID: {payment?.transactionId || '-'}</p>
                 <p>Remarks: {payment?.remarks || '-'}</p>
                 <p>Date: {payment?.paidAt ? new Date(payment.paidAt).toLocaleString() : 'N/A'}</p>

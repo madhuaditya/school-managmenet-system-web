@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Edit2, Trash2 } from 'react-feather';
 import { TableSkeleton } from '../_shared/Skeleton';
+import { formatMoney, normalizeMoneyInput } from '../_shared/money';
 import classService from '../../../services/dashboard-services/classService';
 import feeManagementService from '../../../services/dashboard-services/feeManagementService';
 
@@ -36,6 +37,11 @@ const FeeRecordsManager = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  const toMoney = (value) => {
+    const amount = Number(value);
+    return Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0;
+  };
 
   useEffect(() => {
     loadClasses();
@@ -198,10 +204,10 @@ const FeeRecordsManager = () => {
       userId: selectedStudentId,
       month: Number(form.month),
       year: Number(form.year),
-      totalFee: Number(form.totalFee),
-      dueAmount: Number(form.dueAmount),
-      discount: Number(form.discount || 0),
-      fine: Number(form.fine || 0),
+      totalFee: toMoney(form.totalFee),
+      dueAmount: toMoney(form.dueAmount),
+      discount: toMoney(form.discount || 0),
+      fine: toMoney(form.fine || 0),
       dueDate: form.dueDate || null,
       notes: form.notes?.trim() || '',
       status: form.status,
@@ -238,10 +244,10 @@ const FeeRecordsManager = () => {
     setForm({
       month: String(record?.month || ''),
       year: String(record?.year || ''),
-      totalFee: String(record?.totalFee ?? ''),
-      dueAmount: String(record?.dueAmount ?? ''),
-      discount: String(record?.discount ?? 0),
-      fine: String(record?.fine ?? 0),
+      totalFee: formatMoney(record?.totalFee),
+      dueAmount: formatMoney(record?.dueAmount),
+      discount: formatMoney(record?.discount),
+      fine: formatMoney(record?.fine),
       dueDate: record?.dueDate ? new Date(record.dueDate).toISOString().slice(0, 10) : '',
       notes: record?.notes || '',
       status: record?.status || 'PENDING',
@@ -395,7 +401,7 @@ const FeeRecordsManager = () => {
                   step="0.01"
                   value={form[key]}
                   onChange={(event) => {
-                    setForm((prev) => ({ ...prev, [key]: event.target.value }));
+                    setForm((prev) => ({ ...prev, [key]: normalizeMoneyInput(event.target.value) }));
                     clearFieldError(key);
                   }}
                   className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -476,10 +482,10 @@ const FeeRecordsManager = () => {
                     <p className="text-base font-bold text-slate-900">
                       {record?.month}/{record?.year} - {record?.status}
                     </p>
-                    <p>Total Fee: {record?.totalFee ?? 0}</p>
-                    <p>Paid Amount: {record?.paidAmount ?? 0}</p>
-                    <p>Due Amount: {record?.dueAmount ?? 0}</p>
-                    <p>Discount: {record?.discount ?? 0} | Fine: {record?.fine ?? 0}</p>
+                    <p>Total Fee: {formatMoney(record?.totalFee)}</p>
+                    <p>Paid Amount: {formatMoney(record?.paidAmount)}</p>
+                    <p>Due Amount: {formatMoney(record?.dueAmount)}</p>
+                    <p>Discount: {formatMoney(record?.discount)} | Fine: {formatMoney(record?.fine)}</p>
                     <p>
                       Due Date:{' '}
                       {record?.dueDate ? new Date(record.dueDate).toLocaleDateString() : 'N/A'}

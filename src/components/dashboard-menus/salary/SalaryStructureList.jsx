@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Edit2, Trash2 } from 'react-feather';
 import { TableSkeleton } from '../_shared/Skeleton';
+import { formatMoney, normalizeMoneyInput } from '../_shared/money';
 import salaryStructureService from '../../../services/dashboard-services/salaryStructureService';
 
 const ROLE_OPTIONS = ['TEACHER', 'ACCOUNTANT', 'DRIVER', 'ADMIN', 'OTHER'];
@@ -46,6 +47,11 @@ const SalaryStructureList = () => {
 
   const isEditing = useMemo(() => Boolean(editingId), [editingId]);
 
+  const toMoney = (value) => {
+    const amount = Number(value);
+    return Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0;
+  };
+
   useEffect(() => {
     loadSalaryStructures();
   }, []);
@@ -85,12 +91,12 @@ const SalaryStructureList = () => {
   };
 
   const handleComponentChange = (key, value) => {
-    setComponents((prev) => ({ ...prev, [key]: value }));
+    setComponents((prev) => ({ ...prev, [key]: normalizeMoneyInput(value) }));
     clearFieldError(`components.${key}`);
   };
 
   const handleDeductionChange = (key, value) => {
-    setDeductions((prev) => ({ ...prev, [key]: value }));
+    setDeductions((prev) => ({ ...prev, [key]: normalizeMoneyInput(value) }));
     clearFieldError(`deductions.${key}`);
   };
 
@@ -131,12 +137,12 @@ const SalaryStructureList = () => {
 
   const buildPayload = () => {
     const normalizedComponents = COMPONENT_FIELDS.reduce((acc, field) => {
-      acc[field.key] = Number(components[field.key]);
+      acc[field.key] = toMoney(components[field.key]);
       return acc;
     }, {});
 
     const normalizedDeductions = DEDUCTION_FIELDS.reduce((acc, field) => {
-      acc[field.key] = Number(deductions[field.key]);
+      acc[field.key] = toMoney(deductions[field.key]);
       return acc;
     }, {});
 
@@ -389,18 +395,18 @@ const SalaryStructureList = () => {
                       <div className="mt-2 grid grid-cols-1 gap-1 text-sm text-slate-700 md:grid-cols-2">
                         {COMPONENT_FIELDS.map((field) => (
                           <p key={field.key}>
-                            <span className="font-semibold">{field.label}:</span> {Number(entry?.components?.[field.key] || 0)}
+                            <span className="font-semibold">{field.label}:</span> {formatMoney(entry?.components?.[field.key] || 0)}
                           </p>
                         ))}
                         {DEDUCTION_FIELDS.map((field) => (
                           <p key={field.key}>
-                            <span className="font-semibold">{field.label}:</span> {Number(entry?.deductions?.[field.key] || 0)}
+                            <span className="font-semibold">{field.label}:</span> {formatMoney(entry?.deductions?.[field.key] || 0)}
                           </p>
                         ))}
                       </div>
 
                       <p className="mt-2 text-sm font-semibold text-slate-900">
-                        Earnings: {earnings} | Deductions: {deduction} | Net: {net}
+                        Earnings: {formatMoney(earnings)} | Deductions: {formatMoney(deduction)} | Net: {formatMoney(net)}
                       </p>
                     </div>
 

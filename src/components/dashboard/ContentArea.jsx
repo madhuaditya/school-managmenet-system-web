@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import useRole from '../../hooks/useRole';
+import { MENU_ITEMS } from './MenuItems.config';
 
 // Admin Home Components
 import AdminHome from '../dashboard-menus/home/AdminHome';
@@ -27,6 +28,7 @@ import FeePaymentsManager from '../dashboard-menus/fees/FeePaymentsManager';
 import SalaryStructureList from '../dashboard-menus/salary/SalaryStructureList';
 import SalaryMatrix from '../dashboard-menus/salary/SalaryMatrix';
 import SalaryRecordsManager from '../dashboard-menus/salary/SalaryRecordsManager';
+import SalaryPaymentsManager from '../dashboard-menus/salary/SalaryPaymentsManager';
 import MySalary from '../dashboard-menus/salary/MySalary';
 import CreateAlert from '../dashboard-menus/alerts/CreateAlert';
 import MyAlerts from '../dashboard-menus/alerts/MyAlerts';
@@ -54,6 +56,7 @@ const componentMap = {
   SalaryStructureList,
   SalaryMatrix,
   SalaryRecordsManager,
+  SalaryPaymentsManager,
   MySalary,
   CreateAlert,
   MyAlerts,
@@ -80,6 +83,7 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
     'salary-structure': 'SalaryStructureList',
     'salary-matrix': 'SalaryMatrix',
     'salary-records': 'SalaryRecordsManager',
+    'salary-payments': 'SalaryPaymentsManager',
     'my-salary': 'MySalary',
     'create-alert': 'CreateAlert',
     'my-alerts': 'MyAlerts',
@@ -96,6 +100,13 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
 
   // Override dashboard component based on role
   let componentName = componentNameMap[activeMenu];
+
+  // Fallback for menu keys coming from URL params or dynamic menu additions.
+  if (!componentName) {
+    const roleMenus = MENU_ITEMS[role] || [];
+    componentName = roleMenus.find((item) => item.id === activeMenu)?.component || activeMenu;
+  }
+
   if (activeMenu === 'dashboard') {
     componentName = `${role.charAt(0).toUpperCase() + role.slice(1)}Home`;
   }

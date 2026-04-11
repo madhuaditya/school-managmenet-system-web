@@ -11,8 +11,9 @@ function Login() {
   const loginUser = useAuthStore((state) => state.loginUser);
   const isLoading = useAuthStore((state) => state.isLoading);
 
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [forgotUsername, setForgotUsername] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
   const [sendingForgot, setSendingForgot] = useState(false);
   const [errorText, setErrorText] = useState('');
@@ -25,13 +26,13 @@ function Login() {
     event.preventDefault();
     setErrorText('');
 
-    if (!email.trim() || !password) {
-      setErrorText('Email and password are required.');
+    if (!username.trim() || !password) {
+      setErrorText('Username and password are required.');
       return;
     }
 
     try {
-      await loginUser({ email: email.trim(), password });
+      await loginUser({ username: username.trim(), password });
       navigate(ROUTES.dashboard, { replace: true });
     } catch (error) {
       setErrorText(error?.response?.data?.msg || error?.message || 'Failed to login. Please try again.');
@@ -40,20 +41,25 @@ function Login() {
 
   const onForgotPassword = async () => {
     setErrorText('');
+    const validUsername = forgotUsername.trim().length >= 5;
     const validEmail = /^\S+@\S+\.\S+$/.test(forgotEmail);
 
-    if (!validEmail) {
-      setErrorText('Please enter a valid email for password reset.');
+    if (!validUsername || !validEmail) {
+      setErrorText('Username and valid email are required for password reset.');
       return;
     }
 
     try {
       setSendingForgot(true);
-      const result = await forgotPasswordApi(forgotEmail.trim());
+      const result = await forgotPasswordApi({
+        username: forgotUsername.trim(),
+        email: forgotEmail.trim(),
+      });
       if (!result?.success) {
         throw new Error(result?.msg || 'Failed to send reset link');
       }
       window.alert('Password reset link sent to your email.');
+      setForgotUsername('');
       setForgotEmail('');
     } catch (error) {
       setErrorText(error?.response?.data?.msg || error?.message || 'Failed to send reset link.');
@@ -74,13 +80,13 @@ function Login() {
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Email</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Username</span>
             <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              type="text"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
               className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
-              placeholder="Email address"
+              placeholder="Username"
             />
           </label>
 
@@ -106,7 +112,14 @@ function Login() {
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-sm font-semibold text-slate-800">Forgot Password</p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <input
+              type="text"
+              value={forgotUsername}
+              onChange={(event) => setForgotUsername(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
+              placeholder="Enter your username"
+            />
             <input
               type="email"
               value={forgotEmail}
@@ -114,15 +127,15 @@ function Login() {
               className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
               placeholder="Enter your email"
             />
-            <button
-              type="button"
-              onClick={onForgotPassword}
-              disabled={sendingForgot || isLoading}
-              className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {sendingForgot ? 'Sending...' : 'Send Reset Link'}
-            </button>
           </div>
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            disabled={sendingForgot || isLoading}
+            className="mt-3 w-full rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {sendingForgot ? 'Sending...' : 'Send Reset Link'}
+          </button>
         </div>
 
         {errorText && <p className="mt-4 text-sm font-medium text-red-600">{errorText}</p>}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReactModule from 'highcharts-react-official';
 import { TableSkeleton } from '../_shared/Skeleton';
+import { formatMoney } from '../_shared/money';
 import classService from '../../../services/dashboard-services/classService';
 import feeManagementService from '../../../services/dashboard-services/feeManagementService';
 
@@ -33,7 +34,6 @@ const FeeMatrix = () => {
   }, []);
 
   useEffect(() => {
-    console.log('View mode or filters changed:', { viewMode, month, year, classId });
     if (viewMode === 'class' || viewMode === 'yearly') {
       if (!classId) return;
     }
@@ -339,11 +339,11 @@ const FeeMatrix = () => {
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase text-slate-500">Collected</p>
-              <p className="mt-1 text-2xl font-bold text-emerald-700">{Math.floor(totals?.collected || 0)}</p>
+              <p className="mt-1 text-2xl font-bold text-emerald-700">{formatMoney(totals?.collected || 0)}</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase text-slate-500">Due</p>
-              <p className="mt-1 text-2xl font-bold text-rose-700">{Math.floor(totals?.due || 0)}</p>
+              <p className="mt-1 text-2xl font-bold text-rose-700">{formatMoney(totals?.due || 0)}</p>
             </div>
           </section>
 

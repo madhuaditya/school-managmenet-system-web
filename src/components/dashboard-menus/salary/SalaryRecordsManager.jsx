@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Edit2, Trash2 } from 'react-feather';
 import { TableSkeleton } from '../_shared/Skeleton';
+import { formatMoney, normalizeMoneyInput } from '../_shared/money';
 import adminService from '../../../services/dashboard-services/adminService';
 import teacherService from '../../../services/dashboard-services/teacherService';
 import staffService from '../../../services/dashboard-services/staffService';
@@ -168,13 +169,21 @@ const SalaryRecordsManager = () => {
     clearFieldError(key);
   };
 
+  const handleMoneyFormChange = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: normalizeMoneyInput(value) }));
+    clearFieldError(key);
+  };
+
   const resetForm = () => {
     setEditingId(null);
     setForm(defaultForm);
     setFieldErrors({});
   };
 
-  const normalizeNumber = (value) => Number(value);
+  const normalizeNumber = (value) => {
+    const amount = Number(value);
+    return Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0;
+  };
 
   const validateForm = () => {
     const errors = {};
@@ -308,15 +317,15 @@ const SalaryRecordsManager = () => {
     setForm({
       month: String(record?.month || new Date().getMonth() + 1),
       year: String(record?.year || new Date().getFullYear()),
-      baseSalary: String(record?.baseSalary ?? 0),
-      basic: String(record?.earnings?.basic ?? 0),
-      hra: String(record?.earnings?.hra ?? 0),
-      da: String(record?.earnings?.da ?? 0),
-      bonus: String(record?.earnings?.bonus ?? 0),
-      pf: String(record?.deductions?.pf ?? 0),
-      tax: String(record?.deductions?.tax ?? 0),
-      other: String(record?.deductions?.other ?? 0),
-      leaveDeduction: String(record?.deductions?.leaveDeduction ?? 0),
+      baseSalary: formatMoney(record?.baseSalary),
+      basic: formatMoney(record?.earnings?.basic),
+      hra: formatMoney(record?.earnings?.hra),
+      da: formatMoney(record?.earnings?.da),
+      bonus: formatMoney(record?.earnings?.bonus),
+      pf: formatMoney(record?.deductions?.pf),
+      tax: formatMoney(record?.deductions?.tax),
+      other: formatMoney(record?.deductions?.other),
+      leaveDeduction: formatMoney(record?.deductions?.leaveDeduction),
       remarks: record?.remarks || '',
       status: record?.status || 'UNPAID',
       paymentDate: record?.paymentDate ? new Date(record.paymentDate).toISOString().slice(0, 10) : '',
@@ -478,7 +487,7 @@ const SalaryRecordsManager = () => {
                   min="0"
                   step="0.01"
                   value={form.baseSalary}
-                  onChange={(event) => handleFormChange('baseSalary', event.target.value)}
+                  onChange={(event) => handleMoneyFormChange('baseSalary', event.target.value)}
                   disabled={saving}
                   className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                 />
@@ -502,7 +511,7 @@ const SalaryRecordsManager = () => {
                       min="0"
                       step="0.01"
                       value={form[field.key]}
-                      onChange={(event) => handleFormChange(field.key, event.target.value)}
+                      onChange={(event) => handleMoneyFormChange(field.key, event.target.value)}
                       disabled={saving}
                       className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                     />
@@ -528,7 +537,7 @@ const SalaryRecordsManager = () => {
                       min="0"
                       step="0.01"
                       value={form[field.key]}
-                      onChange={(event) => handleFormChange(field.key, event.target.value)}
+                      onChange={(event) => handleMoneyFormChange(field.key, event.target.value)}
                       disabled={saving}
                       className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                     />
@@ -631,11 +640,11 @@ const SalaryRecordsManager = () => {
                         {MONTHS.find((item) => item.value === String(record?.month))?.label || `Month ${record?.month}`}{' '}
                         {record?.year}
                       </h3>
-                      <p className="mt-1 text-sm text-slate-700">Base Salary: {record?.baseSalary ?? 0}</p>
+                      <p className="mt-1 text-sm text-slate-700">Base Salary: {formatMoney(record?.baseSalary)}</p>
                       <p className="text-sm text-slate-700">
-                        Earnings: {totals.earnings} | Deductions: {totals.deductions} | Net: {totals.net}
+                        Earnings: {formatMoney(totals.earnings)} | Deductions: {formatMoney(totals.deductions)} | Net: {formatMoney(totals.net)}
                       </p>
-                      <p className="text-sm text-slate-700">Paid Amount: {record?.paidAmount ?? 0}</p>
+                      <p className="text-sm text-slate-700">Paid Amount: {formatMoney(record?.paidAmount)}</p>
                       <p className="text-sm text-slate-700">Remarks: {record?.remarks || 'N/A'}</p>
                       <p className="mt-2 text-xs text-slate-500">
                         Status: {record?.status || 'UNPAID'}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Edit2, Trash2 } from 'react-feather';
 import { TableSkeleton } from '../_shared/Skeleton';
+import { formatMoney, normalizeMoneyInput } from '../_shared/money';
 import classService from '../../../services/dashboard-services/classService';
 import feeStructureService from '../../../services/dashboard-services/feeStructureService';
 
@@ -36,6 +37,11 @@ const FeeStructureList = () => {
   const [fieldErrors, setFieldErrors] = useState({});
 
   const isEditing = useMemo(() => Boolean(editingId), [editingId]);
+
+  const toMoney = (value) => {
+    const amount = Number(value);
+    return Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0;
+  };
 
   useEffect(() => {
     loadData();
@@ -82,7 +88,7 @@ const FeeStructureList = () => {
   const handleAmountChange = (key, value) => {
     setComponents((prev) => ({
       ...prev,
-      [key]: value,
+      [key]: normalizeMoneyInput(value),
     }));
 
     setFieldErrors((prev) => {
@@ -130,7 +136,7 @@ const FeeStructureList = () => {
 
   const buildPayload = () => {
     const normalizedComponents = COMPONENT_FIELDS.reduce((acc, field) => {
-      acc[field.key] = Number(components[field.key]);
+      acc[field.key] = toMoney(components[field.key]);
       return acc;
     }, {});
 
@@ -342,11 +348,11 @@ const FeeStructureList = () => {
                     <div className="mt-2 grid grid-cols-1 gap-1 text-sm text-slate-700 md:grid-cols-2">
                       {COMPONENT_FIELDS.map((field) => (
                         <p key={field.key}>
-                          <span className="font-semibold">{field.label}:</span> {Number(entry?.components?.[field.key] || 0)}
+                          <span className="font-semibold">{field.label}:</span> {formatMoney(entry?.components?.[field.key] || 0)}
                         </p>
                       ))}
                     </div>
-                    <p className="mt-2 text-sm font-semibold text-slate-900">Total: {getTotal(entry)}</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-900">Total: {formatMoney(getTotal(entry))}</p>
                   </div>
 
                   <div className="flex shrink-0 items-center gap-1">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { TableSkeleton } from '../_shared/Skeleton';
+import { formatMoney } from '../_shared/money';
 import { useAuthStore } from '../../../stores/authStore';
 import useRole from '../../../hooks/useRole';
 import salaryManagementService from '../../../services/dashboard-services/salaryManagementService';
@@ -97,15 +98,15 @@ const MySalary = () => {
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase text-slate-500">Net Salary</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{totals.net}</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{formatMoney(totals.net)}</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase text-slate-500">Paid</p>
-          <p className="mt-2 text-2xl font-bold text-emerald-700">{totals.paid}</p>
+          <p className="mt-2 text-2xl font-bold text-emerald-700">{formatMoney(totals.paid)}</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase text-slate-500">Pending</p>
-          <p className="mt-2 text-2xl font-bold text-rose-700">{totals.pending}</p>
+          <p className="mt-2 text-2xl font-bold text-rose-700">{formatMoney(totals.pending)}</p>
         </div>
       </section>
 
@@ -131,11 +132,11 @@ const MySalary = () => {
                       {MONTHS.find((item) => item.value === String(record?.month))?.label || `Month ${record?.month}`}{' '}
                       {record?.year}
                     </h3>
-                    <p className="mt-1 text-sm text-slate-700">Base Salary: {record?.baseSalary ?? 0}</p>
-                    <p className="text-sm text-slate-700">Total Earnings: {record?.totalEarnings ?? 0}</p>
-                    <p className="text-sm text-slate-700">Total Deductions: {record?.totalDeductions ?? 0}</p>
-                    <p className="text-sm text-slate-700">Net Salary: {record?.netSalary ?? 0}</p>
-                    <p className="text-sm text-slate-700">Paid Amount: {record?.paidAmount ?? 0}</p>
+                    <p className="mt-1 text-sm text-slate-700">Base Salary: {formatMoney(record?.baseSalary)}</p>
+                    <p className="text-sm text-slate-700">Total Earnings: {formatMoney(record?.totalEarnings)}</p>
+                    <p className="text-sm text-slate-700">Total Deductions: {formatMoney(record?.totalDeductions)}</p>
+                    <p className="text-sm text-slate-700">Net Salary: {formatMoney(record?.netSalary)}</p>
+                    <p className="text-sm text-slate-700">Paid Amount: {formatMoney(record?.paidAmount)}</p>
                     <p className="text-sm text-slate-700">Remarks: {record?.remarks || 'N/A'}</p>
                   </div>
 

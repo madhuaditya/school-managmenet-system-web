@@ -8,6 +8,7 @@ const USER_TYPES = ['admin', 'teacher', 'student', 'staff'];
 
 const initialFormData = {
   name: '',
+  username: '',
   email: '',
   phone: '',
   password: '',
@@ -109,6 +110,12 @@ const AddUser = () => {
 
     if (!formData.name.trim()) nextErrors.name = 'Name is required';
 
+    if (!formData.username.trim()) {
+      nextErrors.username = 'Username is required';
+    } else if (formData.username.trim().length < 5) {
+      nextErrors.username = 'Username must be at least 5 characters';
+    }
+
     if (!formData.email.trim()) {
       nextErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -180,6 +187,7 @@ const AddUser = () => {
 
       const payload = {
         name: formData.name,
+        username: formData.username,
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
@@ -312,6 +320,12 @@ const AddUser = () => {
       <form onSubmit={handleSubmit} className="space-y-8 rounded-xl bg-white p-6 shadow-sm md:p-8">
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {renderInput({ label: 'Full Name', field: 'name', placeholder: 'Enter full name', required: true })}
+          {renderInput({
+            label: 'Username',
+            field: 'username',
+            placeholder: 'Enter username',
+            required: true,
+          })}
           {renderInput({
             label: 'Email',
             field: 'email',

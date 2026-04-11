@@ -64,6 +64,28 @@ export const salaryManagementService = {
     });
     return response.data;
   },
+
+  // Record salary payment
+  recordSalaryPayment: async (data) => {
+    const response = await apiClient.post('/api/salary-management/payment/create', data);
+    return response.data;
+  },
+
+  // Get all payments for a salary record
+  getSalaryPaymentsByRecord: async ({ salaryRecordId, page = 1, limit = 50 }) => {
+    const response = await apiClient.get(`/api/salary-management/payment/${salaryRecordId}`, {
+      params: { page, limit },
+    });
+    return response.data;
+  },
+
+  // Get payment history for a staff member
+  getStaffPaymentHistory: async ({ staffId, page = 1, limit = 50 }) => {
+    const response = await apiClient.get(`/api/salary-management/payment/staff/${staffId}/history`, {
+      params: { page, limit },
+    });
+    return response.data;
+  },
 };
 
 export default salaryManagementService;

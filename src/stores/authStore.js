@@ -19,10 +19,10 @@ export const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
 
-      loginUser: async ({ email, password }) => {
+      loginUser: async ({ username, password }) => {
         set({ isLoading: true });
         try {
-          const result = await loginUserApi({ email, password });
+          const result = await loginUserApi({ username, password });
           if (!result?.success || !result?.data?.accessToken) {
             throw new Error(result?.msg || 'Login failed');
           }

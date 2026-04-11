@@ -30,6 +30,7 @@ export const MENU_ITEMS = {
     { id: 'fee-payments', label: 'Fee Payments', icon: CreditCard, component: 'FeePaymentsManager' },
     { id: 'salary-structure', label: 'Salary Structure', icon: CreditCard, component: 'SalaryStructureList' },
     { id: 'salary-records', label: 'Salary Records', icon: FileText, component: 'SalaryRecordsManager' },
+    { id: 'salary-payments', label: 'Salary Payments', icon: CreditCard, component: 'SalaryPaymentsManager' },
     { id: 'my-salary', label: 'My Salary', icon: DollarSign, component: 'MySalary' },
     { id: 'fee-matrix', label: 'Fee Matrix', icon: BarChart2, component: 'FeeMatrix' },
     { id: 'salary-matrix', label: 'Salary Matrix', icon: BarChart2, component: 'SalaryMatrix' },

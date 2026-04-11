@@ -10,8 +10,8 @@ export const loginSchoolApi = async (payload) => {
   return response.data;
 };
 
-export const forgotPasswordApi = async (email) => {
-  const response = await apiClient.post('/api/auth/forgot-password', { email });
+export const forgotPasswordApi = async (payload) => {
+  const response = await apiClient.post('/api/auth/forgot-password', payload);
   return response.data;
 };
 
