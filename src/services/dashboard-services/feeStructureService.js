@@ -30,12 +30,6 @@ export const feeStructureService = {
     const response = await apiClient.put(`/api/fee-structure/${id}`, data);
     return response.data;
   },
-
-  // Delete fee structure
-  deleteFeeStructure: async (id) => {
-    const response = await apiClient.delete(`/api/fee-structure/${id}`);
-    return response.data;
-  },
 };
 
 export default feeStructureService;

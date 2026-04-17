@@ -6,7 +6,7 @@ import { ROUTES } from '../../constants/routes';
 
 function Layout() {
   const location = useLocation();
-  const hideNavbar = location.pathname === ROUTES.dashboard;
+  const isDashboardRoute = location.pathname.startsWith(ROUTES.dashboard);
 
   useEffect(() => {
     if (location.hash) {
@@ -21,9 +21,13 @@ function Layout() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname, location.hash]);
 
+  if (isDashboardRoute) {
+    return <Outlet />;
+  }
+
   return (
     <div className="min-h-screen bg-site-gradient text-slate-800">
-      {!hideNavbar && <Navbar />}
+      <Navbar />
       <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <Outlet />
       </main>

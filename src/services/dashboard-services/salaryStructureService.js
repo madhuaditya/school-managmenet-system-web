@@ -30,12 +30,6 @@ export const salaryStructureService = {
     const response = await apiClient.put(`/api/salary-structure/${id}`, data);
     return response.data;
   },
-
-  // Delete salary structure
-  deleteSalaryStructure: async (id) => {
-    const response = await apiClient.delete(`/api/salary-structure/${id}`);
-    return response.data;
-  },
 };
 
 export default salaryStructureService;

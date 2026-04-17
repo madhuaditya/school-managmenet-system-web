@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, BarChart2, Calendar } from 'react-feather';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getStudentPerformanceRoute, ROUTES } from '../../../constants/routes';
+import {
+  getDashboardMenuTargetRoute,
+  getStudentPerformanceRoute,
+  ROUTES,
+} from '../../../constants/routes';
 import studentService from '../../../services/dashboard-services/studentService';
 
 const InfoSection = ({ title, children }) => (
@@ -158,7 +162,7 @@ const StudentInfo = () => {
           type="button"
           onClick={() => {
             if (!attendanceUserId) return;
-            navigate(`${ROUTES.dashboard}?menu=attendance&id=${attendanceUserId}`);
+            navigate(getDashboardMenuTargetRoute('attendance', attendanceUserId));
           }}
           disabled={!attendanceUserId}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"

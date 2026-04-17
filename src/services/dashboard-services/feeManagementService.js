@@ -1,35 +1,11 @@
 import apiClient from '../apiClient';
 
 export const feeManagementService = {
-  // Create fee record
-  createFeeRecord: async (data) => {
-    const response = await apiClient.post('/api/fee-management/record/create', data);
-    return response.data;
-  },
-
-  // Update fee record
-  updateFeeRecord: async (id, data) => {
-    const response = await apiClient.put(`/api/fee-management/record/${id}`, data);
-    return response.data;
-  },
-
-  // Delete fee record
-  deleteFeeRecord: async (id) => {
-    const response = await apiClient.delete(`/api/fee-management/record/${id}`);
-    return response.data;
-  },
-
-  // Get student fee records
-  getStudentAllFees: async ({ studentId, page = 1, limit = 20 }) => {
-    const response = await apiClient.get(`/api/fee-management/record/student/${studentId}/all`, {
-      params: { page, limit },
-    });
-    return response.data;
-  },
-
-  // Get student fee by month and year
+  // Get student fee summary by month and year
   getStudentFeeByMonthYear: async ({ studentId, month, year }) => {
-    const response = await apiClient.get(`/api/fee-management/record/student/${studentId}/month/${month}/${year}`);
+    const response = await apiClient.get(
+      `/api/fee-management/summary/student/${studentId}/month/${month}/${year}`
+    );
     return response.data;
   },
 
@@ -39,17 +15,21 @@ export const feeManagementService = {
     return response.data;
   },
 
-  // Get payments for a fee record
-  getPaymentsByFeeRecord: async ({ feeRecordId, page = 1, limit = 20 }) => {
-    const response = await apiClient.get(`/api/fee-management/payment/${feeRecordId}`, {
-      params: { page, limit },
-    });
+  // Get payment by id
+  getPaymentById: async (id) => {
+    const response = await apiClient.get(`/api/fee-management/payment/${id}`);
+    return response.data;
+  },
+
+  // Delete payment by id
+  deletePayment: async (id) => {
+    const response = await apiClient.delete(`/api/fee-management/payment/${id}`);
     return response.data;
   },
 
   // Get student payment history
   getStudentPaymentHistory: async ({ studentId, page = 1, limit = 20 }) => {
-    const response = await apiClient.get(`/api/fee-management/payment/student/${studentId}/history`, {
+    const response = await apiClient.get(`/api/fee-management/summary/student/${studentId}/history`, {
       params: { page, limit },
     });
     return response.data;
@@ -71,13 +51,6 @@ export const feeManagementService = {
     return response.data;
   },
 
-  // Get yearly fee matrix for a class
-  getYearlyFeeMatrix: async ({ classId, year }) => {
-    const response = await apiClient.get('/api/fee-management/analytics/yearly', {
-      params: { classId, year },
-    });
-    return response.data;
-  },
 };
 
 export default feeManagementService;

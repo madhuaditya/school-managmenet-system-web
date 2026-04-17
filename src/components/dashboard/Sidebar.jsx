@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useAuthStore } from '../../stores/authStore';
 import { MENU_ITEMS } from './MenuItems.config';
 import useRole from '../../hooks/useRole';
-import { getStudentPerformanceRoute, ROUTES } from '../../constants/routes';
+import { ROUTES } from '../../constants/routes';
 
 const Sidebar = ({ activeMenu, setActiveMenu }) => {
   const navigate = useNavigate();
@@ -17,13 +17,6 @@ const Sidebar = ({ activeMenu, setActiveMenu }) => {
     if (menuItem.id === 'logout') {
       logout();
       navigate(ROUTES.login, { replace: true });
-    } else if (menuItem.id === 'performance' && role === 'student') {
-      const ownId = profile?._id;
-      if (ownId) {
-        navigate(getStudentPerformanceRoute(ownId));
-      } else {
-        setActiveMenu(menuItem.id);
-      }
     } else {
       setActiveMenu(menuItem.id);
     }

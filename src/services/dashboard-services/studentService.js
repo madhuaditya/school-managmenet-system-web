@@ -7,6 +7,12 @@ export const studentService = {
     return response.data;
   },
 
+  // Legacy alias: several screens still expect this method name.
+  getStudentsByClass: async (classId) => {
+    const response = await apiClient.get(`/api/class/${classId}/students`);
+    return response.data;
+  },
+
   // Get single student
   getStudent: async (id) => {
     const response = await apiClient.get(`/api/student/${id}`);

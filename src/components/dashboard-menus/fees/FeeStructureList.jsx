@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Edit2, Trash2 } from 'react-feather';
+import { Edit2 } from 'react-feather';
 import { TableSkeleton } from '../_shared/Skeleton';
 import { formatMoney, normalizeMoneyInput } from '../_shared/money';
 import classService from '../../../services/dashboard-services/classService';
@@ -198,32 +198,6 @@ const FeeStructureList = () => {
     setSuccess(null);
   };
 
-  const onDelete = async (id) => {
-    const isConfirmed = window.confirm('Are you sure you want to delete this fee structure?');
-    if (!isConfirmed) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-      setSuccess(null);
-
-      const result = await feeStructureService.deleteFeeStructure(id);
-      if (!result?.success) {
-        throw new Error(result?.msg || 'Failed to delete fee structure');
-      }
-
-      setSuccess(result?.msg || 'Fee structure deleted successfully.');
-      if (editingId === id) {
-        resetForm();
-      }
-      await loadData();
-    } catch (err) {
-      setError(err?.response?.data?.msg || err?.message || 'Failed to delete fee structure');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const getClassLabel = (entry) => {
     const cls = entry?.class;
     if (!cls) return 'Unknown class';
@@ -246,7 +220,7 @@ const FeeStructureList = () => {
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Fee Structure</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Create, update and delete class-wise fee structures for your school.
+          Create and update class-wise fee structures for your school.
         </p>
       </div>
 
@@ -364,15 +338,6 @@ const FeeStructureList = () => {
                       aria-label="Edit fee structure"
                     >
                       <Edit2 size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDelete(entry._id)}
-                      disabled={saving}
-                      className="rounded-lg bg-rose-600 p-2 text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
-                      aria-label="Delete fee structure"
-                    >
-                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>

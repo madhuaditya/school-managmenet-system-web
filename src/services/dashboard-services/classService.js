@@ -33,8 +33,25 @@ export const classService = {
 
   // Get class students
   getClassStudents: async (classId) => {
-    const response = await apiClient.get(`/api/class/${classId}/students`);
-    return response.data;
+    try {
+      const response = await apiClient.get(`/api/class/${classId}/students`);
+      return response.data;
+    } catch (error) {
+      // Fallback for environments where the dedicated endpoint is not yet deployed.
+      if (error?.response?.status !== 404) {
+        throw error;
+      }
+
+      const classResponse = await apiClient.get(`/api/class/${classId}`);
+      const payload = classResponse.data || {};
+      const students = Array.isArray(payload?.data?.students) ? payload.data.students : [];
+
+      return {
+        ...payload,
+        success: payload?.success ?? true,
+        data: students,
+      };
+    }
   },
 
   // Get class attendance

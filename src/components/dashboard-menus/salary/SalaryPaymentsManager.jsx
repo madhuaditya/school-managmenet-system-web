@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TableSkeleton } from '../_shared/Skeleton';
 import { formatMoney, normalizeMoneyInput } from '../_shared/money';
 import adminService from '../../../services/dashboard-services/adminService';
 import teacherService from '../../../services/dashboard-services/teacherService';
 import staffService from '../../../services/dashboard-services/staffService';
 import salaryManagementService from '../../../services/dashboard-services/salaryManagementService';
+import salaryStructureService from '../../../services/dashboard-services/salaryStructureService';
 
 const ROLE_OPTIONS = [
   { value: 'admin', label: 'Admin' },
@@ -13,108 +15,98 @@ const ROLE_OPTIONS = [
 ];
 
 const PAYMENT_METHODS = ['BANK', 'UPI', 'CASH'];
-
-const paymentFormDefault = {
-  salaryRecordId: '',
-  amount: '',
-  method: 'BANK',
-  transactionId: '',
-  remarks: '',
+const roleLoaderMap = { admin: adminService.getAdmins, teacher: teacherService.getTeachers, staff: staffService.getStaff };
+const statusMeta = {
+  PENDING: { order: 0, badge: 'bg-slate-100 text-slate-700', card: 'bg-white border-slate-200' },
+  PARTIAL: { order: 1, badge: 'bg-emerald-100 text-emerald-700', card: 'bg-emerald-50 border-emerald-200' },
+  PAID: { order: 2, badge: 'bg-green-200 text-green-800', card: 'bg-green-100 border-green-300' },
 };
 
-const roleLoaderMap = {
-  admin: adminService.getAdmins,
-  teacher: teacherService.getTeachers,
-  staff: staffService.getStaff,
+const initialForm = { salaryStructureId: '', amount: '', method: 'BANK', transactionId: '', remarks: '' };
+
+const getUserOptionLabel = (user) => {
+  if (!user) return 'User';
+  const name = user?.label || user?.raw?.user?.name || user?.raw?.name || 'Unnamed user';
+  const email = user?.raw?.user?.email || user?.raw?.email || 'N/A';
+  const username = user?.raw?.user?.username || user?.raw?.username || 'N/A';
+  return `${name} | Email: ${email} | Username: ${username}`;
+};
+
+const getSalaryStructureLabel = (structure) => {
+  if (!structure) return 'Structure';
+
+  const role = structure?.role || 'ROLE';
+  const basic = Number(structure?.components?.basic || 0);
+  const hra = Number(structure?.components?.hra || 0);
+  const da = Number(structure?.components?.da || 0);
+  const bonus = Number(structure?.components?.bonus || 0);
+  const pf = Number(structure?.deductions?.pf || 0);
+  const tax = Number(structure?.deductions?.tax || 0);
+  const other = Number(structure?.deductions?.other || 0);
+
+  return `${role} | Basic: ${formatMoney(basic)} | HRA: ${formatMoney(hra)} | DA: ${formatMoney(da)} | Bonus: ${formatMoney(bonus)} | PF: ${formatMoney(pf)} | Tax: ${formatMoney(tax)} | Other: ${formatMoney(other)}`;
 };
 
 const SalaryPaymentsManager = () => {
+  const navigate = useNavigate();
+  const now = new Date();
+
   const [selectedRole, setSelectedRole] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1));
+  const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [selectedSalaryRecordId, setSelectedSalaryRecordId] = useState('');
-
   const [usersByRole, setUsersByRole] = useState({ admin: [], teacher: [], staff: [] });
-  const [salaryRecords, setSalaryRecords] = useState([]);
-  const [payments, setPayments] = useState([]);
-
-  const [form, setForm] = useState(paymentFormDefault);
+  const [roleSummaries, setRoleSummaries] = useState([]);
+  const [salaryStructures, setSalaryStructures] = useState([]);
+  const [selectedSummary, setSelectedSummary] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [loadingRecords, setLoadingRecords] = useState(false);
-  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [loadingSummary, setLoadingSummary] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [form, setForm] = useState(initialForm);
 
-  const toMoney = (value) => {
-    const amount = Number(value);
-    return Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0;
-  };
-
-  useEffect(() => {
-    setLoading(false);
-  }, []);
+  useEffect(() => setLoading(false), []);
 
   useEffect(() => {
-    if (!selectedRole) {
-      setSelectedUserId('');
-      setSelectedSalaryRecordId('');
-      setSalaryRecords([]);
-      setPayments([]);
-      return;
+    if (selectedRole) {
+      loadUsersForRole(selectedRole);
+      loadSalaryStructuresForRole(selectedRole);
     }
-
-    loadUsersForRole(selectedRole);
   }, [selectedRole]);
 
   useEffect(() => {
-    if (!selectedUserId) {
-      setSelectedSalaryRecordId('');
-      setSalaryRecords([]);
-      setPayments([]);
-      setForm(paymentFormDefault);
-      return;
+    if (selectedRole) {
+      loadRoleSummaries();
     }
-
-    loadSalaryRecords(selectedUserId);
-  }, [selectedUserId]);
+  }, [selectedRole, selectedMonth, selectedYear, usersByRole]);
 
   useEffect(() => {
-    if (!selectedSalaryRecordId) {
-      setPayments([]);
-      setForm((prev) => ({ ...prev, salaryRecordId: '' }));
-      return;
+    if (selectedUserId) {
+      loadUserSummary(selectedUserId);
     }
-
-    setForm((prev) => ({ ...prev, salaryRecordId: selectedSalaryRecordId }));
-    loadPayments(selectedSalaryRecordId);
-  }, [selectedSalaryRecordId]);
+  }, [selectedUserId, selectedMonth, selectedYear]);
 
   const currentUsers = useMemo(() => usersByRole[selectedRole] || [], [usersByRole, selectedRole]);
 
-  const salaryRecordOptions = useMemo(
+  const selectedUser = useMemo(
+    () => currentUsers.find((item) => item.id === selectedUserId) || null,
+    [currentUsers, selectedUserId]
+  );
+
+  const sortedCards = useMemo(
     () =>
-      salaryRecords
-        .map((record) => ({
-          id: record?._id,
-          label: `${record?.month}/${record?.year} - Net ${formatMoney(record?.netSalary || 0)} - Paid ${formatMoney(record?.paidAmount || 0)} (${record?.status || 'UNPAID'})`,
-        }))
-        .filter((item) => item.id),
-    [salaryRecords]
+      [...roleSummaries].sort(
+        (a, b) =>
+          (statusMeta[a.status]?.order ?? 99) - (statusMeta[b.status]?.order ?? 99) ||
+          (b.dueAmount || 0) - (a.dueAmount || 0)
+      ),
+    [roleSummaries]
   );
-
-  const selectedRecord = useMemo(
-    () => salaryRecords.find((record) => record?._id === selectedSalaryRecordId) || null,
-    [salaryRecords, selectedSalaryRecordId]
-  );
-
-  const pendingAmount = useMemo(() => {
-    if (!selectedRecord) return 0;
-    return Math.max(Number(selectedRecord?.netSalary || 0) - Number(selectedRecord?.paidAmount || 0), 0);
-  }, [selectedRecord]);
 
   const clearFieldError = (key) => {
     setFieldErrors((prev) => {
@@ -125,35 +117,24 @@ const SalaryPaymentsManager = () => {
   };
 
   const loadUsersForRole = async (roleKey) => {
-    if (usersByRole[roleKey]?.length > 0) {
-      const cachedUsers = usersByRole[roleKey];
-      if (!selectedUserId && cachedUsers[0]?.id) {
-        setSelectedUserId(cachedUsers[0].id);
-      }
-      return;
-    }
-
     try {
       setLoadingUsers(true);
-      setError(null);
-
       const loader = roleLoaderMap[roleKey];
       const result = await loader?.();
-      if (!result?.success) {
-        throw new Error(result?.msg || 'Failed to load users');
-      }
-
       const list = Array.isArray(result?.data) ? result.data : [];
-      const normalized = list
-        .map((item) => ({
-          id: item?.user?._id || item?._id,
-          label: item?.user?.name || item?.name || 'Unnamed user',
-          raw: item,
-        }))
-        .filter((item) => item.id);
 
-      setUsersByRole((prev) => ({ ...prev, [roleKey]: normalized }));
-      setSelectedUserId((prev) => prev || normalized[0]?.id || '');
+      setUsersByRole((prev) => ({
+        ...prev,
+        [roleKey]: list
+          .map((item) => ({
+            id: item?.user?._id || item?._id,
+            label: item?.user?.name || item?.name || 'Unnamed user',
+            raw: item,
+          }))
+          .filter((item) => item.id),
+      }));
+
+      setSelectedUserId((prev) => prev || list[0]?.user?._id || list[0]?._id || '');
     } catch (err) {
       setError(err?.response?.data?.msg || err?.message || 'Failed to load users');
     } finally {
@@ -161,104 +142,95 @@ const SalaryPaymentsManager = () => {
     }
   };
 
-  const loadSalaryRecords = async (staffId) => {
+  const loadSalaryStructuresForRole = async (roleKey) => {
     try {
-      setLoadingRecords(true);
-      setError(null);
-
-      const result = await salaryManagementService.getStaffAllSalaries({ staffId, page: 1, limit: 50 });
-      if (!result?.success) {
-        throw new Error(result?.msg || 'Failed to load salary records');
-      }
-
-      const records = Array.isArray(result?.data?.records) ? result.data.records : [];
-      setSalaryRecords(records);
-      const firstRecordId = records[0]?._id || '';
-      setSelectedSalaryRecordId(firstRecordId);
-      setForm((prev) => ({ ...prev, salaryRecordId: firstRecordId }));
-    } catch (err) {
-      setSalaryRecords([]);
-      setSelectedSalaryRecordId('');
-      setForm(paymentFormDefault);
-      setError(err?.response?.data?.msg || err?.message || 'Failed to load salary records');
-    } finally {
-      setLoadingRecords(false);
+      const result = await salaryStructureService.getSalaryStructureByRole(roleKey.toUpperCase());
+      setSalaryStructures(Array.isArray(result?.data) ? result.data : []);
+    } catch {
+      setSalaryStructures([]);
     }
   };
 
-  const loadPayments = async (salaryRecordId) => {
+  const loadRoleSummaries = async () => {
     try {
-      setLoadingPayments(true);
-      setError(null);
+      setLoadingSummary(true);
 
-      const result = await salaryManagementService.getSalaryPaymentsByRecord({
-        salaryRecordId,
-        page: 1,
-        limit: 50,
-      });
-      if (!result?.success) {
-        throw new Error(result?.msg || 'Failed to load salary payments');
-      }
+      const results = await Promise.all(
+        currentUsers.map(async (user) => {
+          const result = await salaryManagementService.getStaffSalaryByMonth({
+            staffId: user.id,
+            month: Number(selectedMonth),
+            year: Number(selectedYear),
+          });
+          return { user, summary: result?.success ? result.data : null };
+        })
+      );
 
-      const list = Array.isArray(result?.data?.records) ? result.data.records : [];
-      setPayments(list);
+      setRoleSummaries(
+        results.map(({ user, summary }) => ({
+          staffId: user.id,
+          staffName: user.label,
+          role: selectedRole,
+          status: summary?.status || 'PENDING',
+          expectedAmount: summary?.expectedAmount || 0,
+          paidAmount: summary?.paidAmount || 0,
+          dueAmount: summary?.dueAmount || 0,
+          salaryStructureId: summary?.salaryStructureId || null,
+          paymentCount: summary?.paymentCount || 0,
+          payments: Array.isArray(summary?.payments) ? summary.payments : [],
+        }))
+      );
     } catch (err) {
-      setPayments([]);
-      setError(err?.response?.data?.msg || err?.message || 'Failed to load salary payments');
+      setRoleSummaries([]);
+      setError(err?.response?.data?.msg || err?.message || 'Failed to load salary summaries');
     } finally {
-      setLoadingPayments(false);
+      setLoadingSummary(false);
     }
+  };
+
+  const loadUserSummary = async (staffId) => {
+    const result = await salaryManagementService.getStaffSalaryByMonth({
+      staffId,
+      month: Number(selectedMonth),
+      year: Number(selectedYear),
+    });
+
+    if (result?.success) setSelectedSummary(result.data || null);
   };
 
   const validateForm = () => {
     const errors = {};
-
     if (!selectedRole) errors.role = 'Role is required.';
     if (!selectedUserId) errors.userId = 'User is required.';
-    if (!selectedSalaryRecordId) errors.salaryRecordId = 'Salary record is required.';
+    if (!selectedMonth) errors.month = 'Month is required.';
+    if (!selectedYear) errors.year = 'Year is required.';
 
     const amount = Number(form.amount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      errors.amount = 'Amount must be greater than 0.';
-    } else if (amount > pendingAmount) {
-      errors.amount = `Amount cannot exceed pending salary (${formatMoney(pendingAmount)}).`;
+    const due = Number(
+      selectedSummary?.status === 'PARTIAL'
+        ? selectedSummary?.dueAmount || 0
+        : selectedSummary?.expectedAmount || 0
+    );
+
+    if (selectedSummary?.status === 'PENDING' && !form.salaryStructureId) {
+      errors.salaryStructureId = 'Salary structure is required.';
     }
 
-    if (!PAYMENT_METHODS.includes(form.method)) {
-      errors.method = 'Payment method is invalid.';
+    if (!Number.isFinite(amount) || amount <= 0) {
+      errors.amount = 'Amount must be greater than 0.';
+    } else if (selectedSummary?.status !== 'PAID' && due > 0 && amount > due) {
+      errors.amount = `Amount cannot exceed remaining amount (${formatMoney(due)}).`;
     }
+
+    if (!PAYMENT_METHODS.includes(form.method)) errors.method = 'Payment method is invalid.';
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const resetForm = () => {
-    setForm({
-      ...paymentFormDefault,
-      salaryRecordId: selectedSalaryRecordId,
-    });
-    setFieldErrors({});
-  };
-
-  const onRoleChange = (roleKey) => {
-    setSelectedRole(roleKey);
-    setSelectedUserId('');
-    setSelectedSalaryRecordId('');
-    setSalaryRecords([]);
-    setPayments([]);
-    setForm(paymentFormDefault);
-    setFieldErrors({});
-    setError(null);
-    setSuccess(null);
-  };
-
   const onCreatePayment = async (event) => {
     event.preventDefault();
-
-    if (!validateForm()) {
-      setError('Please fix validation errors before creating payment.');
-      return;
-    }
+    if (!validateForm()) return setError('Please fix validation errors before creating payment.');
 
     try {
       setSaving(true);
@@ -266,25 +238,22 @@ const SalaryPaymentsManager = () => {
       setSuccess(null);
 
       const payload = {
-        salaryRecordId: selectedSalaryRecordId,
-        amount: toMoney(form.amount),
+        staffId: selectedUserId,
+        salaryStructureId: selectedSummary?.salaryStructureId || form.salaryStructureId,
+        month: Number(selectedMonth),
+        year: Number(selectedYear),
+        amount: Number(normalizeMoneyInput(form.amount)),
         method: form.method,
         transactionId: form.transactionId?.trim() || '',
         remarks: form.remarks?.trim() || '',
       };
 
       const result = await salaryManagementService.recordSalaryPayment(payload);
-      if (!result?.success) {
-        throw new Error(result?.msg || 'Failed to record salary payment');
-      }
+      if (!result?.success) throw new Error(result?.msg || 'Failed to record salary payment');
 
       setSuccess(result?.msg || 'Salary payment recorded successfully.');
-      resetForm();
-
-      await Promise.all([
-        loadSalaryRecords(selectedUserId),
-        loadPayments(selectedSalaryRecordId),
-      ]);
+      setForm(initialForm);
+      await Promise.all([loadRoleSummaries(), loadUserSummary(selectedUserId)]);
     } catch (err) {
       setError(err?.response?.data?.msg || err?.message || 'Failed to record salary payment');
     } finally {
@@ -292,192 +261,272 @@ const SalaryPaymentsManager = () => {
     }
   };
 
+  const openHistory = (staffId) => navigate(`/dashboard/salary-history/${staffId}`);
+
   if (loading) return <TableSkeleton />;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Salary Payments</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Record salary payments by selecting role, user, and salary record.
-        </p>
+        <p className="mt-1 text-sm text-slate-600">Role, month and year driven salary payment cards with payment-first flow.</p>
       </div>
 
-      {error ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
-      ) : null}
-      {success ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>
-      ) : null}
+      {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+      {success ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div> : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-4 text-lg font-bold text-slate-900">Select Salary Record</h2>
-
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <h2 className="mb-4 text-lg font-bold text-slate-900">Select Filters</h2>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-700">Role</label>
             <select
               value={selectedRole}
-              onChange={(event) => onRoleChange(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              onChange={(event) => {
+                setSelectedRole(event.target.value);
+                setSelectedUserId('');
+                setSelectedSummary(null);
+                setRoleSummaries([]);
+                setForm(initialForm);
+              }}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
             >
               <option value="">Select role</option>
-              {ROLE_OPTIONS.map((item) => (
-                <option key={item.value} value={item.value}>{item.label}</option>
+              {ROLE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
-            {fieldErrors.role ? <p className="mt-1 text-xs text-rose-600">{fieldErrors.role}</p> : null}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-slate-700">Month</label>
+            <input
+              type="number"
+              min="1"
+              max="12"
+              value={selectedMonth}
+              onChange={(event) => setSelectedMonth(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-slate-700">Year</label>
+            <input
+              type="number"
+              min="2000"
+              value={selectedYear}
+              onChange={(event) => setSelectedYear(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            />
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-700">User</label>
             <select
               value={selectedUserId}
-              onChange={(event) => {
-                setSelectedUserId(event.target.value);
-                clearFieldError('userId');
-              }}
+              onChange={(event) => setSelectedUserId(event.target.value)}
               disabled={!selectedRole || loadingUsers}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               <option value="">{loadingUsers ? 'Loading users...' : 'Select user'}</option>
               {currentUsers.map((item) => (
-                <option key={item.id} value={item.id}>{item.label}</option>
+                <option key={item.id} value={item.id}>{getUserOptionLabel(item)}</option>
               ))}
             </select>
-            {fieldErrors.userId ? <p className="mt-1 text-xs text-rose-600">{fieldErrors.userId}</p> : null}
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Salary Record</label>
-            <select
-              value={selectedSalaryRecordId}
-              onChange={(event) => {
-                setSelectedSalaryRecordId(event.target.value);
-                setForm((prev) => ({ ...prev, salaryRecordId: event.target.value }));
-                clearFieldError('salaryRecordId');
-              }}
-              disabled={!selectedUserId || loadingRecords}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <option value="">{loadingRecords ? 'Loading records...' : 'Select salary record'}</option>
-              {salaryRecordOptions.map((item) => (
-                <option key={item.id} value={item.id}>{item.label}</option>
-              ))}
-            </select>
-            {fieldErrors.salaryRecordId ? <p className="mt-1 text-xs text-rose-600">{fieldErrors.salaryRecordId}</p> : null}
           </div>
         </div>
-
-        {selectedRecord ? (
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-            <p className="font-semibold text-slate-900">Selected Record Details</p>
-            <p>Net Salary: {formatMoney(selectedRecord?.netSalary)}</p>
-            <p>Paid Amount: {formatMoney(selectedRecord?.paidAmount)}</p>
-            <p>Pending Amount: {formatMoney(pendingAmount)}</p>
-            <p>Status: {selectedRecord?.status || 'UNPAID'}</p>
-          </div>
-        ) : null}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-4 text-lg font-bold text-slate-900">Record Payment</h2>
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {['PENDING', 'PARTIAL', 'PAID'].map((status) => {
+          const items = sortedCards.filter((card) => card.status === status);
 
-        <form onSubmit={onCreatePayment} className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Amount</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.amount}
-                onChange={(event) => {
-                  setForm((prev) => ({ ...prev, amount: normalizeMoneyInput(event.target.value) }));
-                  clearFieldError('amount');
-                }}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-              />
-              {fieldErrors.amount ? <p className="mt-1 text-xs text-rose-600">{fieldErrors.amount}</p> : null}
+          return (
+            <div key={status} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 text-base font-bold text-slate-900">
+                {statusMeta[status].order === 0 ? 'Pending' : statusMeta[status].order === 1 ? 'Partial' : 'Paid'}
+              </h3>
+              <div className="max-h-105 space-y-3 overflow-y-auto pr-1">
+                {items.length === 0 ? (
+                  <p className="text-sm text-slate-500">No {status.toLowerCase()} records.</p>
+                ) : (
+                  items.map((item) => (
+                    <article key={item.staffId} className={`rounded-xl border p-4 ${statusMeta[item.status].card}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="font-bold text-slate-900">{item.staffName}</p>
+                          <p className="text-xs text-slate-600 capitalize">{item.role}</p>
+                        </div>
+                        <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusMeta[item.status].badge}`}>{item.status}</span>
+                      </div>
+                      <div className="mt-3 space-y-1 text-sm text-slate-700">
+                        <p>Expected: {formatMoney(item.expectedAmount)}</p>
+                        <p>Paid: {formatMoney(item.paidAmount)}</p>
+                        <p>Due: {formatMoney(item.dueAmount)}</p>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedUserId(item.staffId)}
+                          className={`rounded-lg px-3 py-1 text-xs font-semibold ${
+                            selectedUserId === item.staffId
+                              ? 'border border-blue-200 bg-blue-100 text-blue-700'
+                              : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          {selectedUserId === item.staffId ? 'Selected' : 'Select'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openHistory(item.staffId)}
+                          className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                        >
+                          History
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
             </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Method</label>
-              <select
-                value={form.method}
-                onChange={(event) => {
-                  setForm((prev) => ({ ...prev, method: event.target.value }));
-                  clearFieldError('method');
-                }}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-              >
-                {PAYMENT_METHODS.map((method) => (
-                  <option key={method} value={method}>{method}</option>
-                ))}
-              </select>
-              {fieldErrors.method ? <p className="mt-1 text-xs text-rose-600">{fieldErrors.method}</p> : null}
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Transaction ID</label>
-              <input
-                type="text"
-                value={form.transactionId}
-                onChange={(event) => setForm((prev) => ({ ...prev, transactionId: event.target.value }))}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                placeholder="Optional for cash"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Remarks</label>
-              <input
-                type="text"
-                value={form.remarks}
-                onChange={(event) => setForm((prev) => ({ ...prev, remarks: event.target.value }))}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                placeholder="Optional remarks"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={saving || !selectedSalaryRecordId}
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {saving ? 'Saving...' : 'Record Payment'}
-          </button>
-        </form>
+          );
+        })}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-4 text-lg font-bold text-slate-900">Payment History</h2>
+      {selectedUserId ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">{selectedUser?.label || 'Selected User'}</h2>
+              <p className="text-xs text-slate-600">Email: {selectedUser?.raw?.user?.email || selectedUser?.raw?.email || 'N/A'}</p>
+              <p className="text-xs text-slate-600">Username: {selectedUser?.raw?.user?.username || selectedUser?.raw?.username || 'N/A'}</p>
+              <p className="text-sm text-slate-600">{selectedMonth}/{selectedYear}</p>
+            </div>
 
-        {loadingPayments ? (
-          <TableSkeleton />
-        ) : payments.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600">
-            No payments found for selected salary record.
+            <button
+              type="button"
+              onClick={() => openHistory(selectedUserId)}
+              className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+            >
+              View Complete Payment History
+            </button>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {payments.map((payment) => (
-              <article
-                key={payment?._id}
-                className="rounded-xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-4 text-sm text-slate-700"
-              >
-                <p className="text-base font-bold text-slate-900">Amount: {formatMoney(payment?.amount)}</p>
-                <p>Method: {payment?.method || '-'}</p>
-                <p>Status: {payment?.status || '-'}</p>
-                <p>Transaction ID: {payment?.transactionId || '-'}</p>
-                <p>Remarks: {payment?.remarks || '-'}</p>
-                <p>Date: {payment?.paidAt ? new Date(payment.paidAt).toLocaleString() : 'N/A'}</p>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+
+          {loadingSummary ? (
+            <div className="mt-4"><TableSkeleton /></div>
+          ) : (
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">Status: {selectedSummary?.status || 'PENDING'}</p>
+                <p>Expected: {formatMoney(selectedSummary?.expectedAmount || 0)}</p>
+                <p>Paid: {formatMoney(selectedSummary?.paidAmount || 0)}</p>
+                <p>Due: {formatMoney(selectedSummary?.dueAmount || 0)}</p>
+                <p>Payments: {selectedSummary?.paymentCount || 0}</p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">Salary Structure</p>
+                {selectedSummary?.status === 'PENDING' ? (
+                  <select
+                    value={form.salaryStructureId}
+                    onChange={(event) => {
+                      setForm((prev) => ({ ...prev, salaryStructureId: event.target.value }));
+                      clearFieldError('salaryStructureId');
+                    }}
+                    className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                  >
+                    <option value="">Select structure</option>
+                    {salaryStructures.map((structure) => (
+                      <option key={structure._id} value={structure._id}>{getSalaryStructureLabel(structure)}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="mt-2 text-sm text-slate-700">
+                    {selectedSummary?.salaryStructureId ? 'Structure locked for this period.' : 'No structure selected.'}
+                  </p>
+                )}
+
+                {selectedSummary?.status === 'PARTIAL' ? (
+                  <p className="mt-2 text-sm font-semibold text-emerald-700">Remaining amount: {formatMoney(selectedSummary?.dueAmount || 0)}</p>
+                ) : null}
+                {selectedSummary?.status === 'PAID' ? (
+                  <p className="mt-2 text-sm font-semibold text-green-700">Amount paid: {formatMoney(selectedSummary?.paidAmount || 0)}</p>
+                ) : null}
+              </div>
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {selectedUserId && selectedSummary?.status !== 'PAID' ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-lg font-bold text-slate-900">Pay Payment</h2>
+          <form onSubmit={onCreatePayment} className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Amount</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.amount}
+                  onChange={(event) => {
+                    setForm((prev) => ({ ...prev, amount: normalizeMoneyInput(event.target.value) }));
+                    clearFieldError('amount');
+                  }}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Method</label>
+                <select
+                  value={form.method}
+                  onChange={(event) => {
+                    setForm((prev) => ({ ...prev, method: event.target.value }));
+                    clearFieldError('method');
+                  }}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                >
+                  {PAYMENT_METHODS.map((method) => (
+                    <option key={method} value={method}>{method}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Transaction ID</label>
+                <input
+                  type="text"
+                  value={form.transactionId}
+                  onChange={(event) => setForm((prev) => ({ ...prev, transactionId: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Remarks</label>
+                <input
+                  type="text"
+                  value={form.remarks}
+                  onChange={(event) => setForm((prev) => ({ ...prev, remarks: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? 'Saving...' : 'Pay Now'}
+            </button>
+          </form>
+        </section>
+      ) : null}
     </div>
   );
 };

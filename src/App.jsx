@@ -7,6 +7,9 @@ import Contact from './pages/Contact';
 import Login from './pages/Login';
 import SchoolLogin from './pages/SchoolLogin';
 import Dashboard from './pages/Dashboard';
+import DashboardContentRoute from './components/dashboard/DashboardContentRoute';
+import SalaryPaymentHistoryPage from './pages/SalaryPaymentHistoryPage';
+import FeePaymentHistoryPage from './pages/FeePaymentHistoryPage';
 import StudentInfoPage from './pages/StudentInfoPage';
 import StudentPerformancePage from './pages/StudentPerformancePage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
@@ -32,7 +35,32 @@ function App() {
               <Dashboard />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to={ROUTES.dashboardDefault} replace />} />
+          <Route path="dashboard" element={<DashboardContentRoute />} />
+          <Route path="students" element={<DashboardContentRoute />} />
+          <Route path="teachers" element={<DashboardContentRoute />} />
+          <Route path="admin" element={<DashboardContentRoute />} />
+          <Route path="staff" element={<DashboardContentRoute />} />
+          <Route path="adduser" element={<DashboardContentRoute />} />
+          <Route path="classes" element={<DashboardContentRoute />} />
+          <Route path="subjects" element={<DashboardContentRoute />} />
+          <Route path="fee-structure" element={<DashboardContentRoute />} />
+          <Route path="fee-payments" element={<DashboardContentRoute />} />
+          <Route path="salary-structure" element={<DashboardContentRoute />} />
+          <Route path="salary-payments" element={<DashboardContentRoute />} />
+          <Route path="salary-history/:staffId" element={<SalaryPaymentHistoryPage />} />
+          <Route path="fee-history/:studentId" element={<FeePaymentHistoryPage />} />
+          <Route path="my-salary" element={<DashboardContentRoute />} />
+          <Route path="fee-matrix" element={<DashboardContentRoute />} />
+          <Route path="salary-matrix" element={<DashboardContentRoute />} />
+          <Route path="create-alert" element={<DashboardContentRoute />} />
+          <Route path="my-alerts" element={<DashboardContentRoute />} />
+          <Route path="attendance" element={<DashboardContentRoute />} />
+          <Route path="notices" element={<DashboardContentRoute />} />
+          <Route path="profile" element={<DashboardContentRoute />} />
+          <Route path="performance" element={<DashboardContentRoute />} />
+        </Route>
         <Route
           path={ROUTES.studentInfo}
           element={
