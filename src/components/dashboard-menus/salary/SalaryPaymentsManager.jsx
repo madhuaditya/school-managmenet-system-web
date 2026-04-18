@@ -47,6 +47,21 @@ const getSalaryStructureLabel = (structure) => {
   return `${role} | Basic: ${formatMoney(basic)} | HRA: ${formatMoney(hra)} | DA: ${formatMoney(da)} | Bonus: ${formatMoney(bonus)} | PF: ${formatMoney(pf)} | Tax: ${formatMoney(tax)} | Other: ${formatMoney(other)}`;
 };
 
+const getSalaryStructureNet = (structure) => {
+  if (!structure) return 0;
+  const basic = Number(structure?.components?.basic || 0);
+  const hra = Number(structure?.components?.hra || 0);
+  const da = Number(structure?.components?.da || 0);
+  const bonus = Number(structure?.components?.bonus || 0);
+  const pf = Number(structure?.deductions?.pf || 0);
+  const tax = Number(structure?.deductions?.tax || 0);
+  const other = Number(structure?.deductions?.other || 0);
+
+  const earnings = basic + hra + da + bonus;
+  const deductions = pf + tax + other;
+  return Math.max(0, earnings - deductions);
+};
+
 const SalaryPaymentsManager = () => {
   const navigate = useNavigate();
   const now = new Date();
@@ -96,6 +111,16 @@ const SalaryPaymentsManager = () => {
   const selectedUser = useMemo(
     () => currentUsers.find((item) => item.id === selectedUserId) || null,
     [currentUsers, selectedUserId]
+  );
+
+  const selectedSalaryStructure = useMemo(
+    () => salaryStructures.find((item) => item?._id === form.salaryStructureId) || null,
+    [salaryStructures, form.salaryStructureId]
+  );
+
+  const selectedSalaryNet = useMemo(
+    () => getSalaryStructureNet(selectedSalaryStructure),
+    [selectedSalaryStructure]
   );
 
   const sortedCards = useMemo(
@@ -429,19 +454,38 @@ const SalaryPaymentsManager = () => {
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
                 <p className="font-semibold text-slate-900">Salary Structure</p>
                 {selectedSummary?.status === 'PENDING' ? (
-                  <select
-                    value={form.salaryStructureId}
-                    onChange={(event) => {
-                      setForm((prev) => ({ ...prev, salaryStructureId: event.target.value }));
-                      clearFieldError('salaryStructureId');
-                    }}
-                    className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                  >
-                    <option value="">Select structure</option>
-                    {salaryStructures.map((structure) => (
-                      <option key={structure._id} value={structure._id}>{getSalaryStructureLabel(structure)}</option>
-                    ))}
-                  </select>
+                  <>
+                    <select
+                      value={form.salaryStructureId}
+                      onChange={(event) => {
+                        setForm((prev) => ({ ...prev, salaryStructureId: event.target.value }));
+                        clearFieldError('salaryStructureId');
+                      }}
+                      className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                    >
+                      <option value="">Select structure</option>
+                      {salaryStructures.map((structure) => (
+                        <option key={structure._id} value={structure._id}>{getSalaryStructureLabel(structure)}</option>
+                      ))}
+                    </select>
+
+                    {selectedSalaryStructure ? (
+                      <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-slate-700">
+                        <p className="font-semibold text-blue-800">
+                          For this structure you need to pay net total {formatMoney(selectedSalaryNet)}.
+                        </p>
+                        <div className="mt-2 space-y-1">
+                          <p>Basic: {formatMoney(Number(selectedSalaryStructure?.components?.basic || 0))}</p>
+                          <p>HRA: {formatMoney(Number(selectedSalaryStructure?.components?.hra || 0))}</p>
+                          <p>DA: {formatMoney(Number(selectedSalaryStructure?.components?.da || 0))}</p>
+                          <p>Bonus: {formatMoney(Number(selectedSalaryStructure?.components?.bonus || 0))}</p>
+                          <p>PF: -{formatMoney(Number(selectedSalaryStructure?.deductions?.pf || 0))}</p>
+                          <p>Tax: -{formatMoney(Number(selectedSalaryStructure?.deductions?.tax || 0))}</p>
+                          <p>Other: -{formatMoney(Number(selectedSalaryStructure?.deductions?.other || 0))}</p>
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
                 ) : (
                   <p className="mt-2 text-sm text-slate-700">
                     {selectedSummary?.salaryStructureId ? 'Structure locked for this period.' : 'No structure selected.'}

@@ -8,6 +8,14 @@ import {
 } from '../services/authService';
 
 const storage = createJSONStorage(() => localStorage);
+const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+
+const getNextAuthExpiry = () => Date.now() + ONE_MONTH_MS;
+
+const isAuthExpired = (expiresAt) => {
+  const expiry = Number(expiresAt || 0);
+  return !Number.isFinite(expiry) || expiry <= Date.now();
+};
 
 export const useAuthStore = create(
   persist(
@@ -16,6 +24,7 @@ export const useAuthStore = create(
       authType: null,
       accessToken: null,
       refreshToken: null,
+      authExpiresAt: null,
       isAuthenticated: false,
       isLoading: false,
 
@@ -39,6 +48,7 @@ export const useAuthStore = create(
             authType: 'user',
             accessToken: result.data.accessToken,
             refreshToken: result.data.refreshToken,
+            authExpiresAt: getNextAuthExpiry(),
             isAuthenticated: true,
             isLoading: false,
           });
@@ -69,6 +79,7 @@ export const useAuthStore = create(
             authType: 'school',
             accessToken: result.data.token,
             refreshToken: result.data.refreshToken,
+            authExpiresAt: getNextAuthExpiry(),
             isAuthenticated: true,
             isLoading: false,
           });
@@ -100,6 +111,7 @@ export const useAuthStore = create(
           authType: null,
           accessToken: null,
           refreshToken: null,
+          authExpiresAt: null,
           isAuthenticated: false,
           isLoading: false,
         });
@@ -113,8 +125,23 @@ export const useAuthStore = create(
         authType: state.authType,
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
+        authExpiresAt: state.authExpiresAt,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        if (!state.isAuthenticated) return;
+
+        if (isAuthExpired(state.authExpiresAt)) {
+          state.profile = null;
+          state.authType = null;
+          state.accessToken = null;
+          state.refreshToken = null;
+          state.authExpiresAt = null;
+          state.isAuthenticated = false;
+          state.isLoading = false;
+        }
+      },
     },
   ),
 );

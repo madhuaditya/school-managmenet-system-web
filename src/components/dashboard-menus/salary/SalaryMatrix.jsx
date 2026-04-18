@@ -17,6 +17,13 @@ const VIEW_OPTIONS = [
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const getCollectionPercent = (paid, expected) => {
+  const safePaid = Number(paid || 0);
+  const safeExpected = Number(expected || 0);
+  if (safeExpected <= 0) return 0;
+  return Number(((safePaid / safeExpected) * 100).toFixed(2));
+};
+
 const SalaryMatrix = () => {
   const now = new Date();
   const [viewMode, setViewMode] = useState('monthly');
@@ -29,6 +36,7 @@ const SalaryMatrix = () => {
   const [loadingStaff, setLoadingStaff] = useState(true);
   const [loadingMatrix, setLoadingMatrix] = useState(false);
   const [error, setError] = useState(null);
+  const [warning, setWarning] = useState(null);
 
   useEffect(() => {
     loadStaff();
@@ -44,20 +52,34 @@ const SalaryMatrix = () => {
       setLoadingStaff(true);
       setError(null);
 
-      const result = await staffService.getStaff();
-      if (!result?.success) {
+      const [staffResult, adminListResult, teacherListResult] = await Promise.all([
+        staffService.getStaff(),
+        adminService.getAdmins(),
+        teachersService.getTeachers(),
+      ]);
+
+      if (!staffResult?.success) {
         throw new Error(result?.msg || 'Failed to load staff list');
       }
 
-      const adminListResult = await adminService.getAdmins();
-      const teacherListResult = await teachersService.getTeachers();
-        const adminList = Array.isArray(adminListResult?.data) ? adminListResult.data : [];
-        const teacherList = Array.isArray(teacherListResult?.data) ? teacherListResult.data : [];
+      const adminList = Array.isArray(adminListResult?.data) ? adminListResult.data : [];
+      const teacherList = Array.isArray(teacherListResult?.data) ? teacherListResult.data : [];
+      const rawCombined = [...(staffResult?.data || []), ...adminList, ...teacherList];
 
-      const combinedList = [...(result?.data || []), ...adminList, ...teacherList];
-      setStaffList(combinedList);
-      if (combinedList.length > 0) {
-        setStaffId(combinedList[0]?._id || '');
+      const normalized = rawCombined
+        .map((item) => ({
+          id: item?.user?._id || item?._id,
+          label: item?.user?.name || item?.name || 'Unnamed staff',
+          role: item?.role || item?.user?.role || '',
+          raw: item,
+        }))
+        .filter((item) => item.id);
+
+      const uniqueById = Array.from(new Map(normalized.map((item) => [item.id, item])).values());
+
+      setStaffList(uniqueById);
+      if (uniqueById.length > 0) {
+        setStaffId(uniqueById[0].id);
       }
     } catch (err) {
       setError(err?.message || 'Failed to load staff list');
@@ -70,6 +92,7 @@ const SalaryMatrix = () => {
     try {
       setLoadingMatrix(true);
       setError(null);
+      setWarning(null);
 
       let result;
       if (viewMode === 'monthly') {
@@ -82,6 +105,7 @@ const SalaryMatrix = () => {
           staffId,
           year: Number(year),
         });
+        setWarning('Yearly analytics is currently derived from staff monthly summaries.');
       }
 
       if (!result?.success) {
@@ -98,43 +122,44 @@ const SalaryMatrix = () => {
   };
 
   const staffOptions = useMemo(
-    () =>
-      staffList
-        .map((item) => ({
-          id: item?._id,
-          label: item?.user?.name || item?.name || 'Unnamed staff',
-        }))
-        .filter((item) => item.id),
+    () => staffList.map((item) => ({ id: item.id, label: item.label })),
     [staffList]
   );
+
+  const selectedStaffLabel = useMemo(() => {
+    const matched = staffList.find((item) => item.id === staffId);
+    return matched?.label || 'Selected Staff';
+  }, [staffList, staffId]);
 
   const totals = useMemo(() => {
     if (!matrixData) return null;
 
     if (viewMode === 'monthly') {
       return {
-        records: matrixData?.totalRecords || 0,
-        payable: matrixData?.totalSalaryPayable || 0,
-        paid: matrixData?.totalSalaryPaid || 0,
-        pending: matrixData?.totalSalaryPending || 0,
+        records: Number(matrixData?.totalStaff || 0),
+        payable: Number(matrixData?.expectedAmount || 0),
+        paid: Number(matrixData?.paidAmount || 0),
+        pending: Number(matrixData?.dueAmount || 0),
       };
     }
 
     return {
       records: (matrixData?.monthlyBreakdown || []).length,
-      payable: matrixData?.yearlyPayable || 0,
-      paid: matrixData?.yearlyPaid || 0,
-      pending: matrixData?.yearlyPending || 0,
+      payable: Number(matrixData?.yearlyPayable || 0),
+      paid: Number(matrixData?.yearlyPaid || 0),
+      pending: Number(matrixData?.yearlyPending || 0),
     };
   }, [matrixData, viewMode]);
+
+  const totalLabel = useMemo(() => (viewMode === 'monthly' ? 'Total Staff' : 'Months Covered'), [viewMode]);
 
   const mainChartOptions = useMemo(() => {
     if (!matrixData) return null;
 
     if (viewMode === 'monthly') {
-      const staffDetails = Array.isArray(matrixData?.staffDetails) ? matrixData.staffDetails : [];
-      const topPending = [...staffDetails]
-        .sort((a, b) => (b?.pendingAmount || 0) - (a?.pendingAmount || 0))
+      const records = Array.isArray(matrixData?.records) ? matrixData.records : [];
+      const topPending = [...records]
+        .sort((a, b) => (b?.dueAmount || 0) - (a?.dueAmount || 0))
         .slice(0, 12);
 
       return {
@@ -149,18 +174,18 @@ const SalaryMatrix = () => {
         credits: { enabled: false },
         series: [
           {
-            name: 'Net Salary',
-            data: topPending.map((item) => item?.netSalary || 0),
+            name: 'Expected',
+            data: topPending.map((item) => Number(item?.expectedAmount || 0)),
             color: '#2563eb',
           },
           {
             name: 'Paid',
-            data: topPending.map((item) => item?.paidAmount || 0),
+            data: topPending.map((item) => Number(item?.paidAmount || 0)),
             color: '#059669',
           },
           {
             name: 'Pending',
-            data: topPending.map((item) => item?.pendingAmount || 0),
+            data: topPending.map((item) => Number(item?.dueAmount || 0)),
             color: '#dc2626',
           },
         ],
@@ -181,18 +206,18 @@ const SalaryMatrix = () => {
       credits: { enabled: false },
       series: [
         {
-          name: 'Net Salary',
-          data: sorted.map((item) => item?.netSalary || 0),
+          name: 'Expected',
+          data: sorted.map((item) => Number(item?.expectedAmount || 0)),
           color: '#2563eb',
         },
         {
           name: 'Paid',
-          data: sorted.map((item) => item?.paidAmount || 0),
+          data: sorted.map((item) => Number(item?.paidAmount || 0)),
           color: '#059669',
         },
         {
           name: 'Pending',
-          data: sorted.map((item) => item?.pendingAmount || 0),
+          data: sorted.map((item) => Number(item?.dueAmount || 0)),
           color: '#dc2626',
         },
       ],
@@ -200,11 +225,22 @@ const SalaryMatrix = () => {
   }, [matrixData, viewMode]);
 
   const statusPieOptions = useMemo(() => {
-    if (!matrixData || viewMode !== 'monthly') return null;
+    if (!matrixData) return null;
 
-    const paid = matrixData?.paidCount || 0;
-    const partial = matrixData?.partialCount || 0;
-    const unpaid = matrixData?.unpaidCount || 0;
+    let paid = 0;
+    let partial = 0;
+    let pending = 0;
+
+    if (viewMode === 'monthly') {
+      paid = Number(matrixData?.paidCount || 0);
+      partial = Number(matrixData?.partialCount || 0);
+      pending = Number(matrixData?.pendingCount || 0);
+    } else {
+      const monthly = Array.isArray(matrixData?.monthlyBreakdown) ? matrixData.monthlyBreakdown : [];
+      paid = monthly.filter((item) => item?.status === 'PAID').length;
+      partial = monthly.filter((item) => item?.status === 'PARTIAL').length;
+      pending = monthly.filter((item) => item?.status === 'PENDING').length;
+    }
 
     return {
       chart: { type: 'pie', backgroundColor: 'transparent' },
@@ -225,11 +261,72 @@ const SalaryMatrix = () => {
           data: [
             { name: 'Paid', y: paid, color: '#16a34a' },
             { name: 'Partial', y: partial, color: '#f59e0b' },
-            { name: 'Unpaid', y: unpaid, color: '#ef4444' },
+            { name: 'Pending', y: pending, color: '#ef4444' },
           ],
         },
       ],
     };
+  }, [matrixData, viewMode]);
+
+  const extraChartOptions = useMemo(() => {
+    if (!matrixData) return null;
+
+    if (viewMode === 'monthly') {
+      const records = Array.isArray(matrixData?.records) ? matrixData.records : [];
+      return {
+        chart: { type: 'bar', backgroundColor: 'transparent' },
+        title: { text: 'Collection Efficiency by Staff (%)' },
+        xAxis: {
+          categories: records.map((item) => item?.staffName || 'Unknown'),
+          title: { text: null },
+        },
+        yAxis: {
+          min: 0,
+          max: 100,
+          title: { text: 'Collection %' },
+        },
+        tooltip: { pointFormat: '<b>{point.y}%</b>' },
+        credits: { enabled: false },
+        legend: { enabled: false },
+        series: [
+          {
+            name: 'Collection %',
+            data: records.map((item) => getCollectionPercent(item?.paidAmount, item?.expectedAmount)),
+            color: '#0f766e',
+          },
+        ],
+      };
+    }
+
+    const monthly = Array.isArray(matrixData?.monthlyBreakdown) ? matrixData.monthlyBreakdown : [];
+    const sorted = [...monthly].sort((a, b) => (a?.month || 0) - (b?.month || 0));
+
+    return {
+      chart: { type: 'column', backgroundColor: 'transparent' },
+      title: { text: 'Yearly Payment Count by Month' },
+      xAxis: {
+        categories: sorted.map((item) => monthNames[(item?.month || 1) - 1] || `M${item?.month}`),
+      },
+      yAxis: {
+        min: 0,
+        title: { text: 'Payments' },
+      },
+      credits: { enabled: false },
+      legend: { enabled: false },
+      series: [
+        {
+          name: 'Payments',
+          data: sorted.map((item) => Number(item?.paymentCount || 0)),
+          color: '#7c3aed',
+        },
+      ],
+    };
+  }, [matrixData, viewMode]);
+
+  const yearlyRows = useMemo(() => {
+    if (viewMode !== 'yearly') return [];
+    const monthly = Array.isArray(matrixData?.monthlyBreakdown) ? matrixData.monthlyBreakdown : [];
+    return [...monthly].sort((a, b) => (a?.month || 0) - (b?.month || 0));
   }, [matrixData, viewMode]);
 
   if (loadingStaff) return <TableSkeleton />;
@@ -245,6 +342,10 @@ const SalaryMatrix = () => {
 
       {error ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
+      ) : null}
+
+      {warning ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">{warning}</div>
       ) : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -318,7 +419,7 @@ const SalaryMatrix = () => {
         <>
           <section className="grid grid-cols-1 gap-3 md:grid-cols-4">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase text-slate-500">Total Records</p>
+              <p className="text-xs font-semibold uppercase text-slate-500">{totalLabel}</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{totals?.records || 0}</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -339,13 +440,94 @@ const SalaryMatrix = () => {
             {mainChartOptions ? <HighchartsReact highcharts={Highcharts} options={mainChartOptions} /> : null}
           </section>
 
+          {extraChartOptions ? (
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <HighchartsReact highcharts={Highcharts} options={extraChartOptions} />
+            </section>
+          ) : null}
+
           {statusPieOptions ? (
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <HighchartsReact highcharts={Highcharts} options={statusPieOptions} />
             </section>
           ) : null}
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-3 text-lg font-bold text-slate-900">Detailed Breakdown</h2>
+
+            {viewMode === 'monthly' ? (
+              <div className="overflow-x-auto">
+                <div className="max-h-105 overflow-y-auto rounded-xl border border-slate-200">
+                  <table className="min-w-full text-sm">
+                    <thead className="sticky top-0 bg-slate-100 text-left text-slate-700">
+                      <tr>
+                        <th className="px-3 py-2 font-semibold">Staff</th>
+                        <th className="px-3 py-2 font-semibold">Role</th>
+                        <th className="px-3 py-2 font-semibold">Status</th>
+                        <th className="px-3 py-2 font-semibold">Expected</th>
+                        <th className="px-3 py-2 font-semibold">Paid</th>
+                        <th className="px-3 py-2 font-semibold">Due</th>
+                        <th className="px-3 py-2 font-semibold">Payments</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(matrixData?.records || []).map((row) => (
+                        <tr key={row?.staffId} className="border-t border-slate-100 text-slate-700">
+                          <td className="px-3 py-2 font-medium text-slate-900">{row?.staffName || 'Unknown'}</td>
+                          <td className="px-3 py-2 capitalize">{row?.role || 'N/A'}</td>
+                          <td className="px-3 py-2">{row?.status || 'PENDING'}</td>
+                          <td className="px-3 py-2">{formatMoney(Number(row?.expectedAmount || 0))}</td>
+                          <td className="px-3 py-2">{formatMoney(Number(row?.paidAmount || 0))}</td>
+                          <td className="px-3 py-2">{formatMoney(Number(row?.dueAmount || 0))}</td>
+                          <td className="px-3 py-2">{Number(row?.paymentCount || 0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
+
+            {viewMode === 'yearly' ? (
+              <>
+                <p className="mb-2 text-sm text-slate-600">Staff: <span className="font-semibold text-slate-900">{selectedStaffLabel}</span></p>
+                <div className="overflow-x-auto">
+                  <div className="max-h-105 overflow-y-auto rounded-xl border border-slate-200">
+                    <table className="min-w-full text-sm">
+                      <thead className="sticky top-0 bg-slate-100 text-left text-slate-700">
+                        <tr>
+                          <th className="px-3 py-2 font-semibold">Month</th>
+                          <th className="px-3 py-2 font-semibold">Status</th>
+                          <th className="px-3 py-2 font-semibold">Expected</th>
+                          <th className="px-3 py-2 font-semibold">Paid</th>
+                          <th className="px-3 py-2 font-semibold">Due</th>
+                          <th className="px-3 py-2 font-semibold">Payments</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {yearlyRows.map((row) => (
+                          <tr key={row?.month} className="border-t border-slate-100 text-slate-700">
+                            <td className="px-3 py-2 font-medium text-slate-900">{monthNames[(row?.month || 1) - 1] || `M${row?.month}`}</td>
+                            <td className="px-3 py-2">{row?.status || 'PENDING'}</td>
+                            <td className="px-3 py-2">{formatMoney(Number(row?.expectedAmount || 0))}</td>
+                            <td className="px-3 py-2">{formatMoney(Number(row?.paidAmount || 0))}</td>
+                            <td className="px-3 py-2">{formatMoney(Number(row?.dueAmount || 0))}</td>
+                            <td className="px-3 py-2">{Number(row?.paymentCount || 0)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </section>
         </>
-      ) : null}
+      ) : (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <p className="text-sm text-slate-600">No data available for the selected filters.</p>
+        </section>
+      )}
     </div>
   );
 };

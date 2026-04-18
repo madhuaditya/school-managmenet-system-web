@@ -55,6 +55,76 @@ export const salaryManagementService = {
     return response.data;
   },
 
+  // Get staff-wise yearly salary matrix by aggregating 12 monthly summaries
+  getYearlySalaryMatrix: async ({ staffId, year }) => {
+    const months = Array.from({ length: 12 }, (_, index) => index + 1);
+
+    const monthlyResults = await Promise.all(
+      months.map(async (month) => {
+        try {
+          const response = await apiClient.get(
+            `/api/salary-management/summary/staff/${staffId}/month/${month}/${year}`
+          );
+
+          if (!response?.data?.success) {
+            return {
+              month,
+              year: Number(year),
+              expectedAmount: 0,
+              paidAmount: 0,
+              dueAmount: 0,
+              status: 'PENDING',
+              paymentCount: 0,
+            };
+          }
+
+          return {
+            month,
+            ...(response.data.data || {}),
+          };
+        } catch {
+          return {
+            month,
+            year: Number(year),
+            expectedAmount: 0,
+            paidAmount: 0,
+            dueAmount: 0,
+            status: 'PENDING',
+            paymentCount: 0,
+          };
+        }
+      })
+    );
+
+    const monthlyBreakdown = monthlyResults
+      .map((item) => ({
+        month: Number(item?.month || 0),
+        expectedAmount: Number(item?.expectedAmount || 0),
+        paidAmount: Number(item?.paidAmount || 0),
+        dueAmount: Number(item?.dueAmount || 0),
+        status: item?.status || 'PENDING',
+        paymentCount: Number(item?.paymentCount || 0),
+      }))
+      .sort((a, b) => a.month - b.month);
+
+    const yearlyPayable = monthlyBreakdown.reduce((sum, item) => sum + item.expectedAmount, 0);
+    const yearlyPaid = monthlyBreakdown.reduce((sum, item) => sum + item.paidAmount, 0);
+    const yearlyPending = monthlyBreakdown.reduce((sum, item) => sum + item.dueAmount, 0);
+
+    return {
+      success: true,
+      msg: 'Yearly salary matrix derived successfully',
+      data: {
+        staffId,
+        year: Number(year),
+        monthlyBreakdown,
+        yearlyPayable,
+        yearlyPaid,
+        yearlyPending,
+      },
+    };
+  },
+
   // Record salary payment
   recordSalaryPayment: async (data) => {
     const response = await apiClient.post('/api/salary-management/payment/create', data);

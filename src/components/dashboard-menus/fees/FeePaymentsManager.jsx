@@ -45,6 +45,14 @@ const getStudentOptionLabel = (student) => {
   return `${displayName} | Roll: ${rollNo} | ID: ${studentCode} | Father: ${father}`;
 };
 
+const getFeeStructureTotal = (structure) => {
+  if (!structure) return 0;
+  const tuition = Number(structure?.components?.tuition || 0);
+  const exam = Number(structure?.components?.exam || 0);
+  const transport = Number(structure?.components?.transport || 0);
+  return tuition + exam + transport;
+};
+
 const FeePaymentsManager = () => {
   const navigate = useNavigate();
   const now = new Date();
@@ -102,6 +110,16 @@ const FeePaymentsManager = () => {
   const currentStudent = useMemo(
     () => students.find((item) => item._id === selectedStudentId) || null,
     [students, selectedStudentId]
+  );
+
+  const selectedFeeStructure = useMemo(
+    () => feeStructures.find((item) => item?._id === form.feeStructureId) || null,
+    [feeStructures, form.feeStructureId]
+  );
+
+  const selectedFeeStructureTotal = useMemo(
+    () => getFeeStructureTotal(selectedFeeStructure),
+    [selectedFeeStructure]
   );
 
   const clearFieldError = (key) => {
@@ -456,19 +474,34 @@ const FeePaymentsManager = () => {
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
                 <p className="font-semibold text-slate-900">Fee Structure</p>
                 {selectedSummary?.status === 'PENDING' ? (
-                  <select
-                    value={form.feeStructureId}
-                    onChange={(event) => {
-                      setForm((prev) => ({ ...prev, feeStructureId: event.target.value }));
-                      clearFieldError('feeStructureId');
-                    }}
-                    className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                  >
-                    <option value="">Select structure</option>
-                    {feeStructures.map((structure) => (
-                      <option key={structure._id} value={structure._id}>{getFeeStructureLabel(structure)}</option>
-                    ))}
-                  </select>
+                  <>
+                    <select
+                      value={form.feeStructureId}
+                      onChange={(event) => {
+                        setForm((prev) => ({ ...prev, feeStructureId: event.target.value }));
+                        clearFieldError('feeStructureId');
+                      }}
+                      className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                    >
+                      <option value="">Select structure</option>
+                      {feeStructures.map((structure) => (
+                        <option key={structure._id} value={structure._id}>{getFeeStructureLabel(structure)}</option>
+                      ))}
+                    </select>
+
+                    {selectedFeeStructure ? (
+                      <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-slate-700">
+                        <p className="font-semibold text-blue-800">
+                          For this structure you need to pay total {formatMoney(selectedFeeStructureTotal)}.
+                        </p>
+                        <div className="mt-2 space-y-1">
+                          <p>Tuition: {formatMoney(Number(selectedFeeStructure?.components?.tuition || 0))}</p>
+                          <p>Exam: {formatMoney(Number(selectedFeeStructure?.components?.exam || 0))}</p>
+                          <p>Transport: {formatMoney(Number(selectedFeeStructure?.components?.transport || 0))}</p>
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
                 ) : (
                   <p className="mt-2 text-sm text-slate-700">Structure locked for this period.</p>
                 )}
