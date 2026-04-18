@@ -9,8 +9,21 @@ export const progressService = {
   },
 
   // Get single student progress
-  getStudentProgress: async (studentId) => {
-    const response = await apiClient.get(`/api/progress/student/${studentId}`);
+  getStudentProgress: async (studentId, filters = {}) => {
+    const queryString = new URLSearchParams(filters).toString();
+    const response = await apiClient.get(`/api/progress/student/${studentId}${queryString ? `?${queryString}` : ''}`);
+    return response.data;
+  },
+
+  getStudentDashboardAnalytics: async (studentId, filters = {}) => {
+    const queryString = new URLSearchParams(filters).toString();
+    const response = await apiClient.get(`/api/progress/student-dashboard/${studentId}${queryString ? `?${queryString}` : ''}`);
+    return response.data;
+  },
+
+  getClassDashboardAnalytics: async (classId, filters = {}) => {
+    const queryString = new URLSearchParams(filters).toString();
+    const response = await apiClient.get(`/api/progress/class-dashboard/${classId}${queryString ? `?${queryString}` : ''}`);
     return response.data;
   },
 
@@ -53,6 +66,22 @@ export const progressService = {
   // Download performance report card
   downloadReport: async (studentId, type = 'advanced', academicYear) => {
     const response = await apiClient.get(`/api/progress/report-card-cbsc/${studentId}?type=${type}&academicYear=${academicYear}`, {
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  downloadCsvExport: async (studentId, filters = {}) => {
+    const queryString = new URLSearchParams(filters).toString();
+    const response = await apiClient.get(`/api/progress/export/csv/${studentId}${queryString ? `?${queryString}` : ''}`, {
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  downloadExcelExport: async (studentId, filters = {}) => {
+    const queryString = new URLSearchParams(filters).toString();
+    const response = await apiClient.get(`/api/progress/export/excel/${studentId}${queryString ? `?${queryString}` : ''}`, {
       responseType: 'blob',
     });
     return response;

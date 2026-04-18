@@ -77,9 +77,9 @@ const DashboardLayout = () => {
   }, [activeMenu]);
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-screen bg-slate-100 flex overflow-hidden">
       {/* Sidebar - Desktop */}
-      <div className="hidden md:flex md:w-70 bg-white border-r border-gray-200">
+      <div className="hidden md:flex md:w-70 overflow-x-hidden bg-linear-to-b from-[#0b2a5b] via-[#0f3b7a] to-[#0f4f9f] border-r border-blue-900/40 shadow-2xl">
         <Sidebar activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
       </div>
 
@@ -98,7 +98,7 @@ const DashboardLayout = () => {
               initial={{ x: -300 }}
               animate={{ x: 0 }}
               exit={{ x: -300 }}
-              className="md:hidden fixed left-0 top-0 h-screen w-64 bg-white z-40 overflow-y-auto shadow-lg"
+              className="md:hidden fixed left-0 top-0 h-screen w-64 bg-linear-to-b from-[#0b2a5b] via-[#0f3b7a] to-[#0f4f9f] z-40 overflow-x-hidden overflow-y-auto shadow-2xl"
             >
               <Sidebar
                 activeMenu={activeMenu}
@@ -115,29 +115,29 @@ const DashboardLayout = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between gap-3 relative">
+        <div className="bg-linear-to-r from-[#0f376f] via-[#14529b] to-[#1d67c1] border-b border-blue-900/40 p-4 flex items-center justify-between gap-3 relative shadow-lg">
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden text-gray-700 hover:text-gray-900"
+              className="md:hidden text-blue-100 hover:text-white"
             >
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <div className="h-9 w-9 overflow-hidden rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center">
+            <div className="h-9 w-9 overflow-hidden rounded-full border border-blue-200/40 bg-white/15 backdrop-blur flex items-center justify-center">
               {schoolImage ? (
                 <img src={schoolImage} alt={schoolName} className="h-full w-full object-cover" />
               ) : (
-                <span className="text-xs font-bold text-slate-600">{schoolName.charAt(0).toUpperCase()}</span>
+                <span className="text-xs font-bold text-blue-50">{schoolName.charAt(0).toUpperCase()}</span>
               )}
             </div>
-            <h1 className="text-lg font-bold text-gray-800 truncate" title={schoolName}>{schoolName}</h1>
+            <h1 className="text-lg font-bold text-blue-50 truncate" title={schoolName}>{schoolName}</h1>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setActiveMenu('my-alerts')}
-              className="relative inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-700 transition hover:bg-slate-50"
+              className="relative inline-flex items-center justify-center rounded-lg border border-blue-200/40 bg-white/15 p-2 text-blue-50 transition hover:bg-white/25"
               aria-label="Open my alerts"
             >
               <Bell size={18} />
@@ -151,7 +151,7 @@ const DashboardLayout = () => {
             <button
               type="button"
               onClick={() => setProfileOpen((prev) => !prev)}
-              className="h-9 w-9 rounded-full border border-slate-200 bg-blue-50 text-blue-700 font-bold text-sm flex items-center justify-center"
+              className="h-9 w-9 rounded-full border border-blue-200/40 bg-white/15 text-blue-50 font-bold text-sm flex items-center justify-center"
               aria-label="Open profile menu"
             >
               {profile?.image ? (
@@ -206,7 +206,7 @@ const DashboardLayout = () => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-linear-to-br from-[#eef4ff] via-[#f6f9ff] to-[#e8f0ff]">
           <Outlet context={{ activeMenu, setActiveMenu, targetId, setTargetId }} />
         </div>
       </div>

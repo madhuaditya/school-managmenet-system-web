@@ -2,8 +2,8 @@ import PerformanceForm from '../components/dashboard-menus/performance/Performan
 
 function StudentPerformancePage() {
   return (
-    <div className="min-h-screen bg-slate-50 py-6">
-      <div className="mx-auto w-full max-w-5xl px-4 md:px-6">
+    <div className="min-h-screen bg-linear-to-b from-slate-100 via-slate-50 to-white py-6">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
         <PerformanceForm />
       </div>
     </div>
