@@ -4,8 +4,9 @@ import { TableSkeleton } from '../_shared/Skeleton';
 import classService from '../../../services/dashboard-services/classService';
 import teacherService from '../../../services/dashboard-services/teacherService';
 import apiClient from '../../../services/apiClient';
+import ClassAttendanceDashboard from './ClassAttendanceDashboard';
 
-const ClassesList = ({ setActiveMenu, setTargetId }) => {
+const ClassesList = ({ setActiveMenu, setTargetId, targetId }) => {
   const [classes, setClasses] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -238,6 +239,10 @@ const ClassesList = ({ setActiveMenu, setTargetId }) => {
     }
   };
 
+  if (targetId) {
+    return <ClassAttendanceDashboard targetId={targetId} setTargetId={setTargetId} />;
+  }
+
   if (loading) return <TableSkeleton />;
 
   return (
@@ -262,41 +267,56 @@ const ClassesList = ({ setActiveMenu, setTargetId }) => {
           <h2 className="text-lg font-bold text-slate-900">Add New Class</h2>
         </div>
         <form onSubmit={createClass} className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <input
-            type="text"
-            placeholder="Class Name"
-            value={newClassName}
-            onChange={(event) => setNewClassName(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
-          <input
-            type="text"
-            placeholder="Grade"
-            value={newClassGrade}
-            onChange={(event) => setNewClassGrade(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
-          <input
-            type="text"
-            placeholder="Section"
-            value={newClassSection}
-            onChange={(event) => setNewClassSection(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
-          <input
-            type="number"
-            placeholder="Capacity"
-            value={newClassCapacity}
-            onChange={(event) => setNewClassCapacity(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
-          <input
-            type="text"
-            placeholder="Room"
-            value={newClassRoom}
-            onChange={(event) => setNewClassRoom(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Class Name
+            <input
+              type="text"
+              placeholder="Class Name"
+              value={newClassName}
+              onChange={(event) => setNewClassName(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Grade
+            <input
+              type="text"
+              placeholder="Grade"
+              value={newClassGrade}
+              onChange={(event) => setNewClassGrade(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Section
+            <input
+              type="text"
+              placeholder="Section"
+              value={newClassSection}
+              onChange={(event) => setNewClassSection(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Capacity
+            <input
+              type="number"
+              placeholder="Capacity"
+              value={newClassCapacity}
+              onChange={(event) => setNewClassCapacity(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Room
+            <input
+              type="text"
+              placeholder="Room"
+              value={newClassRoom}
+              onChange={(event) => setNewClassRoom(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            />
+          </label>
           <button
             type="submit"
             disabled={saving}
@@ -313,31 +333,37 @@ const ClassesList = ({ setActiveMenu, setTargetId }) => {
           <h2 className="text-lg font-bold text-slate-900">Assign Teacher to Class</h2>
         </div>
         <form onSubmit={assignTeacher} className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <select
-            value={selectedClassForTeacher}
-            onChange={(event) => setSelectedClassForTeacher(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Select Class</option>
-            {classOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Class
+            <select
+              value={selectedClassForTeacher}
+              onChange={(event) => setSelectedClassForTeacher(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Select Class</option>
+              {classOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <select
-            value={selectedTeacherForClass}
-            onChange={(event) => setSelectedTeacherForClass(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Select Teacher</option>
-            {teacherOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Teacher
+            <select
+              value={selectedTeacherForClass}
+              onChange={(event) => setSelectedTeacherForClass(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Select Teacher</option>
+              {teacherOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
           <button
             type="submit"
@@ -355,53 +381,68 @@ const ClassesList = ({ setActiveMenu, setTargetId }) => {
           <h2 className="text-lg font-bold text-slate-900">Add Subject in Class</h2>
         </div>
         <form onSubmit={addSubjectInClass} className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <input
-            type="text"
-            placeholder="Subject Name"
-            value={subjectName}
-            onChange={(event) => setSubjectName(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
-          <input
-            type="text"
-            placeholder="Subject Code"
-            value={subjectCode}
-            onChange={(event) => setSubjectCode(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
-          <input
-            type="number"
-            placeholder="Max Marks"
-            value={subjectMaxMarks}
-            onChange={(event) => setSubjectMaxMarks(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Subject Name
+            <input
+              type="text"
+              placeholder="Subject Name"
+              value={subjectName}
+              onChange={(event) => setSubjectName(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Subject Code
+            <input
+              type="text"
+              placeholder="Subject Code"
+              value={subjectCode}
+              onChange={(event) => setSubjectCode(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Max Marks
+            <input
+              type="number"
+              placeholder="Max Marks"
+              value={subjectMaxMarks}
+              onChange={(event) => setSubjectMaxMarks(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            />
+          </label>
 
-          <select
-            value={selectedClassForSubject}
-            onChange={(event) => setSelectedClassForSubject(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Select Class</option>
-            {classOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Class
+            <select
+              value={selectedClassForSubject}
+              onChange={(event) => setSelectedClassForSubject(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Select Class</option>
+              {classOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <select
-            value={selectedTeacherForSubject}
-            onChange={(event) => setSelectedTeacherForSubject(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Select Teacher</option>
-            {teacherOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Teacher
+            <select
+              value={selectedTeacherForSubject}
+              onChange={(event) => setSelectedTeacherForSubject(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Select Teacher</option>
+              {teacherOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
           <button
             type="submit"
@@ -419,31 +460,37 @@ const ClassesList = ({ setActiveMenu, setTargetId }) => {
           <h2 className="text-lg font-bold text-slate-900">Assign Existing Subject to Class</h2>
         </div>
         <form onSubmit={assignExistingSubject} className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <select
-            value={selectedExistingSubject}
-            onChange={(event) => setSelectedExistingSubject(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Select Subject</option>
-            {subjectOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Subject
+            <select
+              value={selectedExistingSubject}
+              onChange={(event) => setSelectedExistingSubject(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Select Subject</option>
+              {subjectOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <select
-            value={selectedClassForExistingSubject}
-            onChange={(event) => setSelectedClassForExistingSubject(event.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">Select Class</option>
-            {classOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            Class
+            <select
+              value={selectedClassForExistingSubject}
+              onChange={(event) => setSelectedClassForExistingSubject(event.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Select Class</option>
+              {classOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
           <button
             type="submit"
@@ -482,6 +529,18 @@ const ClassesList = ({ setActiveMenu, setTargetId }) => {
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof setTargetId === 'function') {
+                        setTargetId(cls._id);
+                      }
+                    }}
+                    className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-700"
+                  >
+                    Attendance Dashboard
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {

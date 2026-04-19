@@ -7,6 +7,7 @@ import attendanceService from '../../../services/dashboard-services/attendanceSe
 const StaffList = ({ setActiveMenu, setTargetId }) => {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hydratingAttendance, setHydratingAttendance] = useState(false);
   const [error, setError] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [submittingForStaff, setSubmittingForStaff] = useState(null);
@@ -29,7 +30,12 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
 
       const staffList = result?.data || [];
       setStaff(staffList);
-      await hydrateTodayAttendanceStatus(staffList);
+      if (staffList.length > 0) {
+        setHydratingAttendance(true);
+        hydrateTodayAttendanceStatus(staffList).finally(() => {
+          setHydratingAttendance(false);
+        });
+      }
     } catch (error) {
       setError(error?.message || 'Failed to fetch staff');
     } finally {
@@ -67,20 +73,6 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
     setTodayStatusByStaff(statusMap);
   };
 
-  const fetchTodayAttendanceForStaff = async (staffUserId) => {
-    try {
-      const attendanceResponse = await attendanceService.getTodayAttendance(staffUserId);
-      const attendancePayload = attendanceResponse?.data;
-      const attendanceList = Array.isArray(attendancePayload?.attendance)
-        ? attendancePayload.attendance
-        : [];
-      const todayRecord = attendanceList[0];
-      return todayRecord?.status || null;
-    } catch {
-      return null;
-    }
-  };
-
   const markStaffAttendance = async (staffMember, status) => {
     const staffUserId = staffMember?.user?._id || staffMember?._id;
     if (!staffUserId) {
@@ -93,11 +85,8 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
       setFeedback(null);
 
       const today = new Date().toISOString().slice(0, 10);
-      const serverStatus = await fetchTodayAttendanceForStaff(staffUserId);
       const localStatus = todayStatusByStaff[staffMember?._id];
-      const hasAttendance =
-        (serverStatus && serverStatus !== 'not-marked') ||
-        (localStatus && localStatus !== 'not-marked');
+      const hasAttendance = Boolean(localStatus && localStatus !== 'not-marked');
 
       const payload = {
         userId: staffUserId,
@@ -157,6 +146,9 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Staff</h1>
         <p className="mt-2 text-sm font-medium text-slate-600">{staffCount} staff members found</p>
+        {hydratingAttendance ? (
+          <p className="mt-1 text-xs text-slate-500">Refreshing attendance status...</p>
+        ) : null}
       </div>
 
       {feedback ? (
@@ -183,6 +175,10 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
               currentStatus === 'not-marked'
                 ? 'Not Marked'
                 : currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+            const visibleStatuses =
+              currentStatus === 'not-marked'
+                ? ['present', 'absent', 'leave']
+                : ['present', 'absent', 'leave'].filter((status) => status !== currentStatus);
 
             const name = staffMember?.user?.name || staffMember?.name || 'Unnamed Staff';
             const email = staffMember?.user?.email || staffMember?.email || 'N/A';
@@ -229,32 +225,38 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    disabled={submittingForStaff === staffMember?._id}
-                    onClick={() => markStaffAttendance(staffMember, 'present')}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Check size={14} /> Present
-                  </button>
+                  {visibleStatuses.includes('present') ? (
+                    <button
+                      type="button"
+                      disabled={submittingForStaff === staffMember?._id}
+                      onClick={() => markStaffAttendance(staffMember, 'present')}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Check size={14} /> Present
+                    </button>
+                  ) : null}
 
-                  <button
-                    type="button"
-                    disabled={submittingForStaff === staffMember?._id}
-                    onClick={() => markStaffAttendance(staffMember, 'absent')}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <X size={14} /> Absent
-                  </button>
+                  {visibleStatuses.includes('absent') ? (
+                    <button
+                      type="button"
+                      disabled={submittingForStaff === staffMember?._id}
+                      onClick={() => markStaffAttendance(staffMember, 'absent')}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <X size={14} /> Absent
+                    </button>
+                  ) : null}
 
-                  <button
-                    type="button"
-                    disabled={submittingForStaff === staffMember?._id}
-                    onClick={() => markStaffAttendance(staffMember, 'leave')}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Calendar size={14} /> Leave
-                  </button>
+                  {visibleStatuses.includes('leave') ? (
+                    <button
+                      type="button"
+                      disabled={submittingForStaff === staffMember?._id}
+                      onClick={() => markStaffAttendance(staffMember, 'leave')}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Calendar size={14} /> Leave
+                    </button>
+                  ) : null}
                 </div>
 
                 <button

@@ -3,10 +3,13 @@ import { Calendar, Check, Clock, X } from 'react-feather';
 import { TableSkeleton } from '../_shared/Skeleton';
 import teacherService from '../../../services/dashboard-services/teacherService';
 import attendanceService from '../../../services/dashboard-services/attendanceService';
-
+import { useNavigate } from 'react-router-dom';
+import { getDashboardMenuTargetRoute } from '../../../constants/routes';
 const TeachersList = ({ setActiveMenu , setTargetId }) => {
+    const navigate = useNavigate();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hydratingAttendance, setHydratingAttendance] = useState(false);
   const [error, setError] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [submittingForTeacher, setSubmittingForTeacher] = useState(null);
@@ -29,7 +32,12 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
 
       const teacherList = result?.data || [];
       setTeachers(teacherList);
-      await hydrateTodayAttendanceStatus(teacherList);
+      if (teacherList.length > 0) {
+        setHydratingAttendance(true);
+        hydrateTodayAttendanceStatus(teacherList).finally(() => {
+          setHydratingAttendance(false);
+        });
+      }
     } catch (error) {
       setError(error?.message || 'Failed to fetch teachers');
     } finally {
@@ -67,20 +75,6 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
     setTodayStatusByTeacher(statusMap);
   };
 
-  const fetchTodayAttendanceForTeacher = async (teacherUserId) => {
-    try {
-      const attendanceResponse = await attendanceService.getTodayAttendance(teacherUserId);
-      const attendancePayload = attendanceResponse?.data;
-      const attendanceList = Array.isArray(attendancePayload?.attendance)
-        ? attendancePayload.attendance
-        : [];
-      const todayRecord = attendanceList[0];
-      return todayRecord?.status || null;
-    } catch {
-      return null;
-    }
-  };
-
   const markTeacherAttendance = async (teacher, status) => {
     const teacherUserId = teacher?.user?._id;
     if (!teacherUserId) {
@@ -93,11 +87,8 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
       setFeedback(null);
 
       const today = new Date().toISOString().slice(0, 10);
-      const serverStatus = await fetchTodayAttendanceForTeacher(teacherUserId);
       const localStatus = todayStatusByTeacher[teacher?._id];
-      const hasAttendance =
-        (serverStatus && serverStatus !== 'not-marked') ||
-        (localStatus && localStatus !== 'not-marked');
+      const hasAttendance = Boolean(localStatus && localStatus !== 'not-marked');
 
       const payload = {
         userId: teacherUserId,
@@ -133,12 +124,11 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
   };
 
   const openAttendanceMenu = (teacher) => {
-    if (typeof setActiveMenu === 'function') {
-      setActiveMenu('attendance');
-      setTargetId(teacher?._id);
+    if(!teacher?._id) {
+      setFeedback({ type: 'error', text: 'Teacher ID is missing. Cannot open attendance details.' });
       return;
     }
-    setFeedback({ type: 'error', text: 'Attendance detail page is not configured in this view.' });
+       navigate(getDashboardMenuTargetRoute('attendance', teacher?._id));
   };
 
   if (loading) return <TableSkeleton />;
@@ -156,6 +146,9 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Teachers</h1>
         <p className="mt-2 text-sm font-medium text-slate-600">{teacherCount} teachers found</p>
+        {hydratingAttendance ? (
+          <p className="mt-1 text-xs text-slate-500">Refreshing attendance status...</p>
+        ) : null}
       </div>
 
       {feedback ? (
@@ -182,6 +175,10 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
               currentStatus === 'not-marked'
                 ? 'Not Marked'
                 : currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+            const visibleStatuses =
+              currentStatus === 'not-marked'
+                ? ['present', 'absent', 'leave']
+                : ['present', 'absent', 'leave'].filter((status) => status !== currentStatus);
 
             const subjectLabel = (teacher?.teachSubjects || [])
               .map((subject) =>
@@ -226,32 +223,38 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    disabled={submittingForTeacher === teacher?._id}
-                    onClick={() => markTeacherAttendance(teacher, 'present')}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Check size={14} /> Present
-                  </button>
+                  {visibleStatuses.includes('present') ? (
+                    <button
+                      type="button"
+                      disabled={submittingForTeacher === teacher?._id}
+                      onClick={() => markTeacherAttendance(teacher, 'present')}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Check size={14} /> Present
+                    </button>
+                  ) : null}
 
-                  <button
-                    type="button"
-                    disabled={submittingForTeacher === teacher?._id}
-                    onClick={() => markTeacherAttendance(teacher, 'absent')}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <X size={14} /> Absent
-                  </button>
+                  {visibleStatuses.includes('absent') ? (
+                    <button
+                      type="button"
+                      disabled={submittingForTeacher === teacher?._id}
+                      onClick={() => markTeacherAttendance(teacher, 'absent')}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <X size={14} /> Absent
+                    </button>
+                  ) : null}
 
-                  <button
-                    type="button"
-                    disabled={submittingForTeacher === teacher?._id}
-                    onClick={() => markTeacherAttendance(teacher, 'leave')}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Calendar size={14} /> Leave
-                  </button>
+                  {visibleStatuses.includes('leave') ? (
+                    <button
+                      type="button"
+                      disabled={submittingForTeacher === teacher?._id}
+                      onClick={() => markTeacherAttendance(teacher, 'leave')}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Calendar size={14} /> Leave
+                    </button>
+                  ) : null}
                 </div>
 
                 <button

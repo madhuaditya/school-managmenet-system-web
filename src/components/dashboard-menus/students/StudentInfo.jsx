@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, BarChart2, Calendar } from 'react-feather';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -30,16 +30,7 @@ const StudentInfo = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (id) {
-      fetchStudent();
-    } else {
-      setLoading(false);
-      setError('Student id is missing in route.');
-    }
-  }, [id]);
-
-  const formatDate = (value) => {
+  const formatDate = useCallback((value) => {
     if (!value) return undefined;
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) return value;
@@ -48,14 +39,20 @@ const StudentInfo = () => {
       month: 'short',
       year: 'numeric',
     });
-  };
+  }, []);
 
   const attendanceUserId = useMemo(() => {
     if (!student) return '';
     return student?.user?._id || '';
   }, [student]);
 
-  const fetchStudent = async () => {
+  const fetchStudent = useCallback(async () => {
+    if (!id) {
+      setLoading(false);
+      setError('Student id is missing in route.');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -69,7 +66,11 @@ const StudentInfo = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchStudent();
+  }, [fetchStudent]);
 
   if (loading) {
     return (

@@ -15,8 +15,37 @@ export const attendanceService = {
   },
 
   // Get class attendance report
-  getClassAttendance: async (classId) => {
-    const response = await apiClient.get(`/api/attendance/class/${classId}`);
+  getClassAttendance: async (classId, filters = {}) => {
+    const queryString = new URLSearchParams({ classId, ...filters }).toString();
+    const response = await apiClient.get(`/api/attendance/class?${queryString}`);
+    return response.data;
+  },
+
+  // Class attendance dashboard summary
+  getClassDashboardSummary: async (filters = {}) => {
+    const queryString = new URLSearchParams(filters).toString();
+    const response = await apiClient.get(`/api/attendance/dashboard/summary?${queryString}`);
+    return response.data;
+  },
+
+  // Class attendance dashboard matrix
+  getClassDashboardMatrix: async (filters = {}) => {
+    const queryString = new URLSearchParams(filters).toString();
+    const response = await apiClient.get(`/api/attendance/dashboard/matrix?${queryString}`);
+    return response.data;
+  },
+
+  // Class attendance dashboard trend
+  getClassDashboardTrend: async (filters = {}) => {
+    const queryString = new URLSearchParams(filters).toString();
+    const response = await apiClient.get(`/api/attendance/dashboard/trend?${queryString}`);
+    return response.data;
+  },
+
+  // Class attendance status distribution
+  getClassDashboardStatusBreakdown: async (filters = {}) => {
+    const queryString = new URLSearchParams(filters).toString();
+    const response = await apiClient.get(`/api/attendance/dashboard/status-breakdown?${queryString}`);
     return response.data;
   },
 
