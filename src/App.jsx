@@ -45,6 +45,7 @@ function App() {
             { path: 'staff', element: <DashboardContentRoute /> },
             { path: 'adduser', element: <DashboardContentRoute /> },
             { path: 'classes', element: <DashboardContentRoute /> },
+            { path: 'id-cards', element: <DashboardContentRoute /> },
             { path: 'subjects', element: <DashboardContentRoute /> },
             { path: 'fee-structure', element: <DashboardContentRoute /> },
             { path: 'fee-payments', element: <DashboardContentRoute /> },

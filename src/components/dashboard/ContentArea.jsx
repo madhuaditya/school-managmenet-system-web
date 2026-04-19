@@ -34,6 +34,7 @@ import CreateAlert from '../dashboard-menus/alerts/CreateAlert';
 import MyAlerts from '../dashboard-menus/alerts/MyAlerts';
 import ProfileView from '../dashboard-menus/profile/ProfileView';
 import AddUser from '../dashboard-menus/users/AddUser';
+import IDCardGenerator from '../dashboard-menus/id-cards/IDCardGenerator';
 
 const componentMap = {
   AdminHome,
@@ -62,7 +63,8 @@ const componentMap = {
   MyAlerts,
   ProfileView,
   AddUser,
-  AdminList
+  AdminList,
+  IDCardGenerator,
 };
 
 const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => {
@@ -75,6 +77,7 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
     staff: 'StaffList',
     adduser: 'AddUser',
     classes: 'ClassesList',
+    'id-cards': 'IDCardGenerator',
     subjects: 'SubjectsList',
     'fee-structure': 'FeeStructureList',
     'fee-matrix': 'FeeMatrix',

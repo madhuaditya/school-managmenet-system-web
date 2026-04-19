@@ -48,6 +48,65 @@ export const studentService = {
     const response = await apiClient.post(`/api/attendance/mark`, { userId: id, ...data });
     return response.data;
   },
+
+  getIdCardClasses: async () => {
+    const response = await apiClient.get('/api/student/id-card/classes');
+    return response.data;
+  },
+
+  getIdCardStudentsByClass: async (classId) => {
+    const response = await apiClient.get(`/api/student/id-card/class/${classId}/students`);
+    return response.data;
+  },
+
+  uploadSchoolIdCardLogo: async (logoFile) => {
+    const formData = new FormData();
+    formData.append('logo', logoFile);
+
+    const response = await apiClient.post('/api/student/id-card/upload-school-logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    return response.data;
+  },
+
+  uploadSchoolPrincipalSignature: async (signatureFile) => {
+    const formData = new FormData();
+    formData.append('signature', signatureFile);
+
+    const response = await apiClient.post('/api/student/id-card/upload-principal-signature', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    return response.data;
+  },
+
+  uploadStudentIdCardPhoto: async (studentId, photoFile) => {
+    const formData = new FormData();
+    formData.append('photo', photoFile);
+
+    const response = await apiClient.post(`/api/student/id-card/upload-student-photo/${studentId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    return response.data;
+  },
+
+  generateSingleIdCardPdf: async (payload) => {
+    const response = await apiClient.post('/api/student/id-card/generate-single', payload, {
+      responseType: 'blob',
+    });
+
+    return response.data;
+  },
+
+  generateBulkIdCardPdf: async (payload) => {
+    const response = await apiClient.post('/api/student/id-card/generate-bulk', payload, {
+      responseType: 'blob',
+    });
+
+    return response.data;
+  },
 };
 
 export default studentService;

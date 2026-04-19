@@ -24,6 +24,7 @@ export const MENU_ITEMS = {
     { id: 'staff', label: 'Staff', icon: Briefcase, component: 'StaffList', path: '/dashboard/staff' },
     { id: 'adduser', label: 'Add User', icon: UserPlus, component: 'AddUser', path: '/dashboard/adduser' },
     { id: 'classes', label: 'Classes', icon: BookOpen, component: 'ClassesList', path: '/dashboard/classes' },
+    { id: 'id-cards', label: 'Generate ID Card', icon: FileText, component: 'IDCardGenerator', path: '/dashboard/id-cards' },
     { id: 'subjects', label: 'Subjects', icon: BookOpen, component: 'SubjectsList', path: '/dashboard/subjects' },
     { id: 'fee-structure', label: 'Fee Structure', icon: DollarSign, component: 'FeeStructureList', path: '/dashboard/fee-structure' },
     { id: 'fee-payments', label: 'Fee Payments', icon: CreditCard, component: 'FeePaymentsManager', path: '/dashboard/fee-payments' },
@@ -42,6 +43,7 @@ export const MENU_ITEMS = {
   teacher: [
     { id: 'dashboard', label: 'Dashboard', icon: Home, component: 'TeacherHome', path: '/dashboard/dashboard' },
     { id: 'students', label: 'Students', icon: Users, component: 'StudentsList', path: '/dashboard/students' },
+    { id: 'id-cards', label: 'Generate ID Card', icon: FileText, component: 'IDCardGenerator', path: '/dashboard/id-cards' },
     { id: 'subjects', label: 'My Subjects', icon: BookOpen, component: 'SubjectsList', path: '/dashboard/subjects' },
     { id: 'attendance', label: 'Attendance', icon: Calendar, component: 'AttendanceMarkForm', path: '/dashboard/attendance' },
     { id: 'my-salary', label: 'My Salary', icon: DollarSign, component: 'MySalary', path: '/dashboard/my-salary' },
