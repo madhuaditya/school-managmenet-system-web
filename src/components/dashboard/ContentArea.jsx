@@ -35,6 +35,9 @@ import MyAlerts from '../dashboard-menus/alerts/MyAlerts';
 import ProfileView from '../dashboard-menus/profile/ProfileView';
 import AddUser from '../dashboard-menus/users/AddUser';
 import IDCardGenerator from '../dashboard-menus/id-cards/IDCardGenerator';
+import ApplyLeave from '../dashboard-menus/leave/ApplyLeave';
+import MyLeaves from '../dashboard-menus/leave/MyLeaves';
+import LeaveAdminReview from '../dashboard-menus/leave/LeaveAdminReview';
 
 const componentMap = {
   AdminHome,
@@ -65,6 +68,9 @@ const componentMap = {
   AddUser,
   AdminList,
   IDCardGenerator,
+  ApplyLeave,
+  MyLeaves,
+  LeaveAdminReview,
 };
 
 const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => {
@@ -90,6 +96,9 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
     'my-salary': 'MySalary',
     'create-alert': 'CreateAlert',
     'my-alerts': 'MyAlerts',
+    'leave-apply': 'ApplyLeave',
+    'my-leaves': 'MyLeaves',
+    'leave-review': 'LeaveAdminReview',
     attendance: 'AttendanceMarkForm',
     performance: 'PerformanceForm',
     notices: 'NoticesList',
