@@ -13,6 +13,7 @@ import {
   Bell,
   User,
   LogOut,
+  Layers,
 } from 'react-feather';
 
 export const MENU_ITEMS = {
@@ -26,6 +27,7 @@ export const MENU_ITEMS = {
     { id: 'classes', label: 'Classes', icon: BookOpen, component: 'ClassesList', path: '/dashboard/classes' },
     { id: 'id-cards', label: 'Generate ID Card', icon: FileText, component: 'IDCardGenerator', path: '/dashboard/id-cards' },
     { id: 'subjects', label: 'Subjects', icon: BookOpen, component: 'SubjectsList', path: '/dashboard/subjects' },
+    { id: 'exams', label: 'Exams', icon: BookOpen, component: 'ExamManagement', path: '/dashboard/exams' },
     { id: 'fee-structure', label: 'Fee Structure', icon: DollarSign, component: 'FeeStructureList', path: '/dashboard/fee-structure' },
     { id: 'fee-payments', label: 'Fee Payments', icon: CreditCard, component: 'FeePaymentsManager', path: '/dashboard/fee-payments' },
     { id: 'salary-structure', label: 'Salary Structure', icon: CreditCard, component: 'SalaryStructureList', path: '/dashboard/salary-structure' },

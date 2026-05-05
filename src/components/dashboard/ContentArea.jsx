@@ -8,18 +8,25 @@ import TeacherHome from '../dashboard-menus/home/TeacherHome';
 import StudentHome from '../dashboard-menus/home/StudentHome';
 import StaffHome from '../dashboard-menus/home/StaffHome';
 
-// Management Components
+// Management Components - Optimized with AG-Grid
+import StudentsListNew from '../dashboard-menus/students/StudentsListNew';
+import TeachersListNew from '../dashboard-menus/teachers/TeachersListNew';
+import AdminListNew from '../dashboard-menus/admin/AdminListNew';
+import StaffListNew from '../dashboard-menus/staff/StaffListNew';
+// Legacy components kept for backward compatibility
 import StudentsList from '../dashboard-menus/students/StudentsList';
 import TeachersList from '../dashboard-menus/teachers/TeachersList';
 import AdminList from '../dashboard-menus/admin/AdminList';
 import StaffList from '../dashboard-menus/staff/StaffList';
 import ClassesList from '../dashboard-menus/classes/ClassesList';
+import ClassInfoView from '../dashboard-menus/classes/ClassInfoView';
 import SubjectsList from '../dashboard-menus/subjects/SubjectsList';
 
 // Feature Components
 import AttendanceMarkForm from '../dashboard-menus/attendance/AttendanceMarkForm';
 import MyAttendance from '../dashboard-menus/attendance/MyAttendance';
 import PerformanceForm from '../dashboard-menus/performance/PerformanceForm';
+import ExamManagement from '../dashboard-menus/exams/ExamManagement';
 import NoticesList from '../dashboard-menus/notices/NoticesList';
 import FeeStructureList from '../dashboard-menus/fees/FeeStructureList';
 import FeeMatrix from '../dashboard-menus/fees/FeeMatrix';
@@ -44,14 +51,21 @@ const componentMap = {
   TeacherHome,
   StudentHome,
   StaffHome,
+  StudentsListNew,
+  TeachersListNew,
+  StaffListNew,
   StudentsList,
   TeachersList,
+  AdminList,
+  AdminListNew,
   StaffList,
   ClassesList,
+  ClassInfoView,
   SubjectsList,
   AttendanceMarkForm,
   MyAttendance,
   PerformanceForm,
+  ExamManagement,
   NoticesList,
   FeeStructureList,
   FeeMatrix,
@@ -77,12 +91,13 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
   // Map menu IDs to component names
   const componentNameMap = {
     dashboard: 'AdminHome', // Will be overridden by role
-    students: 'StudentsList',
-    teachers: 'TeachersList',
-    'admin': 'AdminList',
-    staff: 'StaffList',
+    students: 'StudentsListNew',
+    teachers: 'TeachersListNew',
+    'admin': 'AdminListNew',
+    staff: 'StaffListNew',
     adduser: 'AddUser',
     classes: 'ClassesList',
+    class: 'ClassInfoView',
     'id-cards': 'IDCardGenerator',
     subjects: 'SubjectsList',
     'fee-structure': 'FeeStructureList',
@@ -103,7 +118,6 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
     performance: 'PerformanceForm',
     notices: 'NoticesList',
     profile: 'ProfileView',
-    class: 'ClassesList',
     class_detail: 'ClassesList',
     'my-attendance': 'MyAttendance',
   };

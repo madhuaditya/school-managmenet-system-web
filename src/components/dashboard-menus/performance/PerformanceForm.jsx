@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Highcharts from 'highcharts';
 import HighchartsReactModule from 'highcharts-react-official';
 import { Download, Edit2, Plus, Trash2, X } from 'react-feather';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { useAuthStore } from '../../../stores/authStore';
 import apiClient from '../../../services/apiClient';
 import progressService from '../../../services/dashboard-services/progressService';
@@ -46,6 +48,17 @@ const toShortDate = (value) => {
 };
 
 const isObjectIdLike = (value) => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value);
+
+const triggerPdfDownload = (blob, filename) => {
+  const blobUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  link.parentNode.removeChild(link);
+  window.URL.revokeObjectURL(blobUrl);
+};
 
 const typeOptions = [
   { value: 'all', label: 'All Types' },
@@ -114,6 +127,76 @@ function PerformanceForm({ targetId }) {
   const [downloadingRaw, setDownloadingRaw] = useState(null);
 
   const yearOptions = useMemo(() => getYears(), []);
+
+  const convertHtmlToPdf = useCallback(async (html) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-10000px';
+    iframe.style.top = '0';
+    iframe.style.width = '1200px';
+    iframe.style.height = '1600px';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) {
+      document.body.removeChild(iframe);
+      throw new Error('Unable to prepare report preview');
+    }
+
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    await new Promise((resolve) => {
+      const finish = () => setTimeout(resolve, 250);
+      if (doc.readyState === 'complete') {
+        finish();
+        return;
+      }
+      iframe.onload = finish;
+    });
+
+    const target = doc.body;
+    const canvas = await html2canvas(target, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      windowWidth: doc.documentElement.scrollWidth,
+      windowHeight: doc.documentElement.scrollHeight,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true,
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pageWidth;
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+    }
+
+    const blob = pdf.output('blob');
+    document.body.removeChild(iframe);
+    return blob;
+  }, []);
 
   const subjectFilterOptions = useMemo(() => {
     const fromSubjectApi = Array.isArray(subjects)
@@ -604,15 +687,15 @@ function PerformanceForm({ targetId }) {
   const handleDownloadReport = async (type) => {
     try {
       setDownloadingType(type);
-      const response = await progressService.downloadReport(selectedId, type, year);
-      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.setAttribute('download', `performance-${type}-${student?.name || 'report'}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
+      const response = await progressService.getReportHtml(selectedId, type, year);
+      const html = response?.data?.html || '';
+
+      if (!html) {
+        throw new Error('Report HTML not returned from server');
+      }
+
+      const pdfBlob = await convertHtmlToPdf(html);
+      triggerPdfDownload(pdfBlob, `performance-${type}-${student?.name || dashboard?.student?.name || 'report'}.pdf`);
     } catch {
       setError('Failed to download report');
     } finally {
@@ -668,7 +751,7 @@ function PerformanceForm({ targetId }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-blue-100">Student Performance Dashboard</p>
-            <h1 className="mt-1 text-3xl font-black">{student?.name || dashboard?.student?.name || 'Student'}</h1>
+            <h1 className="mt-1 text-3xl font-black">{student?.name || dashboard?.student?.name || 'Student'} </h1>
             <p className="mt-1 text-sm text-blue-100">
               Student ID: {student?.studentId || dashboard?.student?.studentId || '-'} | Roll: {student?.rollNumber || dashboard?.student?.rollNumber || '-'}
             </p>
@@ -677,6 +760,7 @@ function PerformanceForm({ targetId }) {
             </p>
           </div>
 
+         {(role === 'admin' || role === 'teacher') && (
           <div className="flex flex-wrap gap-2">
             {['advanced', 'styled', 'cbse'].map((item) => (
               <button
@@ -690,7 +774,7 @@ function PerformanceForm({ targetId }) {
                 {downloadingType === item ? 'Downloading...' : `${item.toUpperCase()} PDF`}
               </button>
             ))}
-          </div>
+          </div>)}
         </div>
       </section>
 
@@ -797,6 +881,7 @@ function PerformanceForm({ targetId }) {
             />
           </div>
 
+        { (role === 'admin' || role === 'teacher') && (
           <div className="ml-auto flex gap-2">
             <button
               type="button"
@@ -816,7 +901,7 @@ function PerformanceForm({ targetId }) {
               <Download size={13} />
               {downloadingRaw === 'excel' ? 'Exporting Excel...' : 'Excel'}
             </button>
-          </div>
+          </div>)}
 
           {canManage && activeTab === 'student' ? (
             <div>

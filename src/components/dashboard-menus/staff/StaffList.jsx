@@ -23,19 +23,20 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await staffService.getStaff();
+      const result = await attendanceService.getTodayAttendanceByRole('staff');
       if (!result?.success) {
-        throw new Error(result?.msg || 'Failed to fetch staff');
+        throw new Error(result?.msg || 'Failed to fetch staff attendance');
       }
-
-      const staffList = result?.data || [];
+      const payload = result?.data || {};
+      const staffList = Array.isArray(payload.attendance) ? payload.attendance : [];
       setStaff(staffList);
-      if (staffList.length > 0) {
-        setHydratingAttendance(true);
-        hydrateTodayAttendanceStatus(staffList).finally(() => {
-          setHydratingAttendance(false);
-        });
-      }
+      const statusMap = {};
+      staffList.forEach((s) => {
+        const id = s.userId || s._id;
+        if (id) statusMap[id] = s.status || 'not-marked';
+      });
+      setTodayStatusByStaff(statusMap);
+      setHydratingAttendance(false);
     } catch (error) {
       setError(error?.message || 'Failed to fetch staff');
     } finally {
@@ -46,35 +47,11 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
   const hydrateTodayAttendanceStatus = async (staffList) => {
     const statusMap = {};
 
-    await Promise.all(
-      staffList.map(async (staffMember) => {
-        const staffUserId = staffMember?.user?._id || staffMember?._id;
-
-        if (!staffUserId) {
-          statusMap[staffMember?._id] = 'not-marked';
-          return;
-        }
-
-        try {
-          const attendanceResponse = await attendanceService.getTodayAttendance(staffUserId);
-          const attendancePayload = attendanceResponse?.data;
-          const attendanceList = Array.isArray(attendancePayload?.attendance)
-            ? attendancePayload.attendance
-            : [];
-          const todayRecord = attendanceList[0];
-
-          statusMap[staffMember?._id] = todayRecord?.status || 'not-marked';
-        } catch {
-          statusMap[staffMember?._id] = 'not-marked';
-        }
-      })
-    );
-
-    setTodayStatusByStaff(statusMap);
+    // removed per-user hydration — using consolidated attendance payload
   };
 
   const markStaffAttendance = async (staffMember, status) => {
-    const staffUserId = staffMember?.user?._id || staffMember?._id;
+    const staffUserId = staffMember?.userId || staffMember?.user?._id || staffMember?._id;
     if (!staffUserId) {
       setFeedback({ type: 'error', text: 'Unable to mark attendance for this staff member.' });
       return;
@@ -85,7 +62,7 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
       setFeedback(null);
 
       const today = new Date().toISOString().slice(0, 10);
-      const localStatus = todayStatusByStaff[staffMember?._id];
+      const localStatus = todayStatusByStaff[staffMember?._id] || todayStatusByStaff[staffMember?.userId];
       const hasAttendance = Boolean(localStatus && localStatus !== 'not-marked');
 
       const payload = {
@@ -105,11 +82,12 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
       setTodayStatusByStaff((prev) => ({
         ...prev,
         [staffMember?._id]: status,
+        [staffMember?.userId]: status,
       }));
 
       setFeedback({
         type: 'success',
-        text: `${staffMember?.user?.name || staffMember?.name || 'Staff'} marked ${status}.`,
+        text: `${staffMember?.name || staffMember?.user?.name || 'Staff'} marked ${status}.`,
       });
     } catch (error) {
       setFeedback({
@@ -170,7 +148,8 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
       ) : (
         <div className="space-y-4">
           {staff.map((staffMember) => {
-            const currentStatus = todayStatusByStaff[staffMember?._id] || 'not-marked';
+            const currentStatus =
+              todayStatusByStaff[staffMember?._id] || todayStatusByStaff[staffMember?.userId] || todayStatusByStaff[String(staffMember?._id)] || 'not-marked';
             const currentStatusLabel =
               currentStatus === 'not-marked'
                 ? 'Not Marked'
@@ -180,9 +159,9 @@ const StaffList = ({ setActiveMenu, setTargetId }) => {
                 ? ['present', 'absent', 'leave']
                 : ['present', 'absent', 'leave'].filter((status) => status !== currentStatus);
 
-            const name = staffMember?.user?.name || staffMember?.name || 'Unnamed Staff';
-            const email = staffMember?.user?.email || staffMember?.email || 'N/A';
-            const phone = staffMember?.user?.phone || staffMember?.phone || 'N/A';
+            const name = staffMember?.name || staffMember?.user?.name || 'Unnamed Staff';
+            const email = staffMember?.email || staffMember?.user?.email || 'N/A';
+            const phone = staffMember?.phone || staffMember?.user?.phone || 'N/A';
             const designation =
               staffMember?.designation ||
               staffMember?.role?.role ||

@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BookOpen, CheckCircle, Layers, Users } from 'react-feather';
+import { useNavigate } from 'react-router-dom';
 import { TableSkeleton } from '../_shared/Skeleton';
 import classService from '../../../services/dashboard-services/classService';
 import teacherService from '../../../services/dashboard-services/teacherService';
 import apiClient from '../../../services/apiClient';
 import ClassAttendanceDashboard from './ClassAttendanceDashboard';
+import { getDashboardMenuTargetRoute } from '../../../constants/routes';
 
 const ClassesList = ({ setActiveMenu, setTargetId, targetId }) => {
+  const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -529,6 +532,14 @@ const ClassesList = ({ setActiveMenu, setTargetId, targetId }) => {
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate(getDashboardMenuTargetRoute('class', cls._id))}
+                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700"
+                  >
+                    View Class Info
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {

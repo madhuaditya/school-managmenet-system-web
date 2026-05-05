@@ -43,7 +43,7 @@ const StudentsList = () => {
     []
   );
 
-  const getAttendanceUserId = useCallback((student) => student?.user?._id || student?._id, []);
+  const getAttendanceUserId = useCallback((student) => student?.userId || student?.user?._id || student?._id, []);
 
   const extractTodayAttendance = useCallback((payload) => {
     const first = Array.isArray(payload?.attendance) ? payload.attendance[0] : undefined;
@@ -114,22 +114,28 @@ const StudentsList = () => {
         setAttendanceStatus({});
         setFeedback(null);
 
-        const response = await classService.getClass(classId);
+        // Fetch consolidated class info + today's attendance in a single call
+        const response = await attendanceService.getTodayClassAttendance(classId);
         if (!response?.success) {
-          throw new Error(response?.msg || 'Failed to load class details');
+          throw new Error(response?.msg || 'Failed to load class attendance');
         }
 
-        const classData = response?.data || null;
-        setSelectedClassData(classData);
+        const payload = response?.data || null;
+        // payload: { classInfo, date, attendance: [ { userId, name, email, rollNumber, status, ... } ], summary }
+        setSelectedClassData(payload);
 
-        const students = Array.isArray(classData?.students) ? classData.students : [];
+        const students = Array.isArray(payload?.attendance) ? payload.attendance : [];
         if (students.length > 0) {
-          setHydratingAttendance(true);
-          hydrateTodayAttendanceStatus(students, classId).finally(() => {
-            if (activeClassRef.current === classId) {
-              setHydratingAttendance(false);
-            }
+          // Build quick lookup map for attendance status to avoid per-user requests
+          const statusMap = {};
+          students.forEach((s) => {
+            const uid = s.userId || s.user?._id || s._id;
+            if (uid) statusMap[uid] = { status: s.status || 'not-marked', date: payload.date };
           });
+          if (activeClassRef.current === classId) {
+            setAttendanceStatus(statusMap);
+          }
+          setHydratingAttendance(false);
         } else {
           setHydratingAttendance(false);
         }
@@ -252,7 +258,7 @@ const StudentsList = () => {
     [attendanceStatus]
   );
 
-  const students = useMemo(() => selectedClassData?.students || [], [selectedClassData]);
+  const students = useMemo(() => selectedClassData?.attendance || [], [selectedClassData]);
 
   if (loadingClasses && selectedClassId === null) {
     return <TableSkeleton />;
@@ -328,10 +334,10 @@ const StudentsList = () => {
           </button>
 
           <h1 className="text-3xl font-bold text-slate-900">
-            {selectedClassData.name}
-            {selectedClassData.section ? ` (${selectedClassData.section})` : ''}
+            {selectedClassData?.classInfo?.name}
+            {selectedClassData?.classInfo?.section ? ` (${selectedClassData.classInfo.section})` : ''}
           </h1>
-          <p className="mt-1 text-sm text-slate-600">Grade: {selectedClassData.grade || 'N/A'}</p>
+          <p className="mt-1 text-sm text-slate-600">Grade: {selectedClassData?.classInfo?.grade || 'N/A'}</p>
           <p className="mt-1 text-sm font-semibold text-slate-700">
             {students.length} Student{students.length !== 1 ? 's' : ''}
           </p>
@@ -369,7 +375,7 @@ const StudentsList = () => {
               : attendanceActions;
 
             return (
-              <div key={student._id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div key={student.studentId || student.userId || student._id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="flex gap-3">
                   <div
                     className={`mt-1 flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white ${getAttendanceBadgeColor(attendanceUserId)}`}
@@ -378,10 +384,10 @@ const StudentsList = () => {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-base font-semibold text-slate-900">{student?.user?.name || 'Unknown'}</p>
-                    <p className="truncate text-sm text-slate-600">{student?.user?.email || 'N/A'}</p>
+                    <p className="text-base font-semibold text-slate-900">{student?.name || 'Unknown'}</p>
+                    <p className="truncate text-sm text-slate-600">{student?.email || 'N/A'}</p>
                     <p className="text-sm text-slate-600">
-                      Roll: {student?.rollNumber || 'N/A'} | {student?.gradeLevel || 'N/A'}
+                      Roll: {student?.rollNumber || 'N/A'} | {selectedClassData?.classInfo?.grade || 'N/A'}
                     </p>
                     <p className="mt-1 text-xs font-semibold text-slate-700">
                       Current: {statusLabel ? statusLabel.toUpperCase() : 'NOT MARKED'}
@@ -410,15 +416,15 @@ const StudentsList = () => {
                   })}
                 </div>
 
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenStudentInfo(student?._id)}
-                    className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
-                  >
-                    See Student Info
-                  </button>
-                </div>
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenStudentInfo(student?.studentId || student?.userId || student?._id)}
+                      className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+                    >
+                      See Student Info
+                    </button>
+                  </div>
 
                 {statusLabel ? (
                   <p className="mt-3 text-xs text-slate-500">

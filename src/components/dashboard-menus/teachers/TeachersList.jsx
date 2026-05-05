@@ -25,19 +25,21 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await teacherService.getTeachers();
+      // Use consolidated attendance endpoint which returns user info + today's attendance
+      const result = await attendanceService.getTodayAttendanceByRole('teacher');
       if (!result?.success) {
-        throw new Error(result?.msg || 'Failed to fetch teachers');
+        throw new Error(result?.msg || 'Failed to fetch teachers attendance');
       }
-
-      const teacherList = result?.data || [];
+      const payload = result?.data || {};
+      const teacherList = Array.isArray(payload.attendance) ? payload.attendance : [];
       setTeachers(teacherList);
-      if (teacherList.length > 0) {
-        setHydratingAttendance(true);
-        hydrateTodayAttendanceStatus(teacherList).finally(() => {
-          setHydratingAttendance(false);
-        });
-      }
+      const statusMap = {};
+      teacherList.forEach((t) => {
+        const id = t.userId || t._id;
+        if (id) statusMap[id] = t.status || 'not-marked';
+      });
+      setTodayStatusByTeacher(statusMap);
+      setHydratingAttendance(false);
     } catch (error) {
       setError(error?.message || 'Failed to fetch teachers');
     } finally {
@@ -48,35 +50,11 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
   const hydrateTodayAttendanceStatus = async (teacherList) => {
     const statusMap = {};
 
-    await Promise.all(
-      teacherList.map(async (teacher) => {
-        const teacherUserId = teacher?.user?._id;
-
-        if (!teacherUserId) {
-          statusMap[teacher?._id] = 'not-marked';
-          return;
-        }
-
-        try {
-          const attendanceResponse = await attendanceService.getTodayAttendance(teacherUserId);
-          const attendancePayload = attendanceResponse?.data;
-          const attendanceList = Array.isArray(attendancePayload?.attendance)
-            ? attendancePayload.attendance
-            : [];
-          const todayRecord = attendanceList[0];
-
-          statusMap[teacher?._id] = todayRecord?.status || 'not-marked';
-        } catch {
-          statusMap[teacher?._id] = 'not-marked';
-        }
-      })
-    );
-
-    setTodayStatusByTeacher(statusMap);
+    // per-user hydration removed — consolidated endpoint supplies today's status
   };
 
   const markTeacherAttendance = async (teacher, status) => {
-    const teacherUserId = teacher?.user?._id;
+    const teacherUserId = teacher?.userId || teacher?._id;
     if (!teacherUserId) {
       setFeedback({ type: 'error', text: 'Unable to mark attendance for this teacher.' });
       return;
@@ -87,7 +65,7 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
       setFeedback(null);
 
       const today = new Date().toISOString().slice(0, 10);
-      const localStatus = todayStatusByTeacher[teacher?._id];
+      const localStatus = todayStatusByTeacher[teacher?._id] || todayStatusByTeacher[teacher?.userId];
       const hasAttendance = Boolean(localStatus && localStatus !== 'not-marked');
 
       const payload = {
@@ -107,11 +85,12 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
       setTodayStatusByTeacher((prev) => ({
         ...prev,
         [teacher?._id]: status,
+        [teacher?.userId]: status,
       }));
 
       setFeedback({
         type: 'success',
-        text: `${teacher?.user?.name || 'Teacher'} marked ${status}.`,
+        text: `${teacher?.name || 'Teacher'} marked ${status}.`,
       });
     } catch (error) {
       setFeedback({
@@ -170,7 +149,8 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
       ) : (
         <div className="space-y-4">
           {teachers.map((teacher) => {
-            const currentStatus = todayStatusByTeacher[teacher?._id] || 'not-marked';
+            const currentStatus =
+              todayStatusByTeacher[teacher?._id] || todayStatusByTeacher[teacher?.userId] || todayStatusByTeacher[String(teacher?._id)] || 'not-marked';
             const currentStatusLabel =
               currentStatus === 'not-marked'
                 ? 'Not Marked'
@@ -180,27 +160,26 @@ const TeachersList = ({ setActiveMenu , setTargetId }) => {
                 ? ['present', 'absent', 'leave']
                 : ['present', 'absent', 'leave'].filter((status) => status !== currentStatus);
 
-            const subjectLabel = (teacher?.teachSubjects || [])
+            const subjectLabel = (teacher?.teachSubjects || teacher?.roleMeta?.teachSubjects || [])
               .map((subject) =>
                 subject?.code ? `${subject?.name || 'Subject'} (${subject.code})` : subject?.name || 'Subject'
               )
               .filter(Boolean)
               .join(', ');
-
-            const classLabel = teacher?.classTeacher
-              ? `${teacher?.classTeacher?.name || '-'} ${teacher?.classTeacher?.section || ''}`.trim()
+            const classLabel = teacher?.classTeacher || teacher?.roleMeta?.classTeacher
+              ? `${(teacher?.classTeacher?.name || teacher?.roleMeta?.classTeacher?.name) || '-'} ${(teacher?.classTeacher?.section || teacher?.roleMeta?.classTeacher?.section) || ''}`.trim()
               : 'Not assigned';
 
             return (
               <div key={teacher?._id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-lg font-semibold text-slate-900">{teacher?.user?.name || 'Unnamed Teacher'}</p>
-                <p className="mt-1 text-sm text-slate-600">Email: {teacher?.user?.email || 'N/A'}</p>
-                <p className="text-sm text-slate-600">Phone: {teacher?.user?.phone || 'N/A'}</p>
+                <p className="text-lg font-semibold text-slate-900">{teacher?.name || 'Unnamed Teacher'}</p>
+                <p className="mt-1 text-sm text-slate-600">Email: {teacher?.email || 'N/A'}</p>
+                <p className="text-sm text-slate-600">Phone: {teacher?.phone || 'N/A'}</p>
                 <p className="text-sm text-slate-600">Class Teacher: {classLabel}</p>
                 <p className="text-sm text-slate-600">Subjects: {subjectLabel || 'N/A'}</p>
                 <p className="text-sm text-slate-600">
                   Address:{' '}
-                  {[teacher?.user?.address, teacher?.user?.city, teacher?.user?.state, teacher?.user?.pinCode]
+                  {[teacher?.address, teacher?.city, teacher?.state, teacher?.pinCode, teacher?.roleMeta?.address]
                     .filter(Boolean)
                     .join(', ') || 'N/A'}
                 </p>

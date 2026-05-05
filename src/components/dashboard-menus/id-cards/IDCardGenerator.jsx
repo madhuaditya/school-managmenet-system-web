@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, Upload, Users, User, Printer } from 'react-feather';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { toast } from 'react-toastify';
 import studentService from '../../../services/dashboard-services/studentService';
 
@@ -15,6 +17,7 @@ const DEFAULT_EDITABLE = {
   fatherName: '',
   motherName: '',
   rollNumber: '',
+  gender: '',
   bloodGroup: '',
   dateOfBirth: '',
   parentContact: '',
@@ -89,6 +92,7 @@ const PreviewCard = ({ templateId, data, schoolLogo, studentPhoto, principalSign
             <p><span className="font-semibold">Admission:</span> {data.admissionNo || 'N/A'}</p>
             <p><span className="font-semibold">Class:</span> {data.classLabel || 'N/A'}</p>
             <p><span className="font-semibold">Roll:</span> {data.rollNumber || 'N/A'}</p>
+            <p><span className="font-semibold">Gender:</span> {data.gender || 'N/A'}</p>
             <p><span className="font-semibold">DOB:</span> {data.dateOfBirth || 'N/A'}</p>
             <p><span className="font-semibold">Blood:</span> {data.bloodGroup || 'N/A'}</p>
             <p><span className="font-semibold">Valid Till:</span> {data.validUntil || 'N/A'}</p>
@@ -222,6 +226,7 @@ const IDCardGenerator = () => {
                 fatherName: student.fatherName || '',
                 motherName: student.motherName || '',
                 rollNumber: student.rollNumber || '',
+                      gender: student.gender || '',
                 bloodGroup: student.bloodGroup || '',
                 dateOfBirth: toInputDate(student.dateOfBirth),
                 parentContact: student.parentContact || '',
@@ -324,6 +329,76 @@ const IDCardGenerator = () => {
     }
   }, [selectedStudentId]);
 
+  const convertHtmlToPdf = useCallback(async (html, templateId) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-10000px';
+    iframe.style.top = '0';
+    iframe.style.width = '1200px';
+    iframe.style.height = '1600px';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) {
+      document.body.removeChild(iframe);
+      throw new Error('Unable to create PDF preview frame');
+    }
+
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    await new Promise((resolve) => {
+      const complete = () => setTimeout(resolve, 250);
+      if (doc.readyState === 'complete') {
+        complete();
+        return;
+      }
+      iframe.onload = complete;
+    });
+
+    const target = doc.body;
+    const canvas = await html2canvas(target, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      windowWidth: doc.documentElement.scrollWidth,
+      windowHeight: doc.documentElement.scrollHeight,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: templateId === 'template-3' || templateId === 'template-4' ? 'portrait' : 'landscape',
+      unit: 'mm',
+      format: 'a4',
+      compress: true,
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pageWidth;
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+    }
+
+    const blob = pdf.output('blob');
+    document.body.removeChild(iframe);
+    return blob;
+  }, []);
+
   const uploadPrincipalSignature = useCallback(async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -357,7 +432,9 @@ const IDCardGenerator = () => {
         studentOverrides: studentOverridesById[selectedStudentId] || {},
       };
 
-      const pdfBlob = await studentService.generateSingleIdCardPdf(payload);
+      const result = await studentService.generateSingleIdCardHtml(payload);
+      const html = result?.data?.html || '';
+      const pdfBlob = await convertHtmlToPdf(html, templateId);
       const admission = selectedStudent?.admissionNo || selectedStudentId;
       triggerPdfDownload(pdfBlob, `id-card-${admission}.pdf`);
       toast.success('ID card downloaded');
@@ -390,7 +467,9 @@ const IDCardGenerator = () => {
         overridesByStudent: studentOverridesById,
       };
 
-      const pdfBlob = await studentService.generateBulkIdCardPdf(payload);
+      const result = await studentService.generateBulkIdCardHtml(payload);
+      const html = result?.data?.html || '';
+      const pdfBlob = await convertHtmlToPdf(html, templateId);
       triggerPdfDownload(pdfBlob, `id-cards-${selectedClass?.name || 'class'}.pdf`);
       toast.success('Merged PDF downloaded');
     } catch (error) {
@@ -415,6 +494,7 @@ const IDCardGenerator = () => {
       name: override.name || student?.name || '',
       classLabel: override.classLabel || buildClassLabel(selectedClass),
       rollNumber: override.rollNumber || student?.rollNumber || '',
+      gender: override.gender || student?.gender || '',
       dateOfBirth: override.dateOfBirth || toInputDate(student?.dateOfBirth),
       bloodGroup: override.bloodGroup || student?.bloodGroup || '',
       parentContact: override.parentContact || student?.parentContact || '',
@@ -541,6 +621,16 @@ const IDCardGenerator = () => {
               <div>
                 <label className="text-xs font-medium text-slate-700 block mb-1">Roll Number</label>
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value={activeStudentOverrides.rollNumber || ''} onChange={(event) => onEditableStudentChange('rollNumber', event.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-700 block mb-1">Gender</label>
+                <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value={activeStudentOverrides.gender || ''} onChange={(event) => onEditableStudentChange('gender', event.target.value)}>
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-700 block mb-1">Blood Group</label>

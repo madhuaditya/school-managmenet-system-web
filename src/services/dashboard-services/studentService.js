@@ -100,11 +100,21 @@ export const studentService = {
     return response.data;
   },
 
+  generateSingleIdCardHtml: async (payload) => {
+    const response = await apiClient.post('/api/student/id-card/generate-single-html', payload);
+    return response.data;
+  },
+
   generateBulkIdCardPdf: async (payload) => {
     const response = await apiClient.post('/api/student/id-card/generate-bulk', payload, {
       responseType: 'blob',
     });
 
+    return response.data;
+  },
+
+  generateBulkIdCardHtml: async (payload) => {
+    const response = await apiClient.post('/api/student/id-card/generate-bulk-html', payload);
     return response.data;
   },
 };

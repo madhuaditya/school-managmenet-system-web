@@ -13,6 +13,11 @@ export const classService = {
     return response.data;
   },
 
+  getClassInfo: async (classId) => {
+    const response = await apiClient.get(`/api/class/${classId}/info`);
+    return response.data;
+  },
+
   // Create class
   createClass: async (data) => {
     const response = await apiClient.post('/api/class', data);

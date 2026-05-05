@@ -71,6 +71,19 @@ export const progressService = {
     return response;
   },
 
+  getReportHtml: async (studentId, type = 'advanced', academicYear) => {
+    const endpointMap = {
+      advanced: `/api/progress/advanced-report-html/${studentId}`,
+      styled: `/api/progress/report-card-html/${studentId}`,
+      cbse: `/api/progress/report-card-cbsc-html/${studentId}`,
+    };
+
+    const endpoint = endpointMap[type] || endpointMap.cbse;
+    const queryString = new URLSearchParams({ academicYear }).toString();
+    const response = await apiClient.get(`${endpoint}?${queryString}`);
+    return response.data;
+  },
+
   downloadCsvExport: async (studentId, filters = {}) => {
     const queryString = new URLSearchParams(filters).toString();
     const response = await apiClient.get(`/api/progress/export/csv/${studentId}${queryString ? `?${queryString}` : ''}`, {

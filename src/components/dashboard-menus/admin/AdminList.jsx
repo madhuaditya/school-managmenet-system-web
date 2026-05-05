@@ -25,19 +25,23 @@ const AdminList = ({ setActiveMenu , setTargetId }) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await adminService.getAdmins();
+      // Use consolidated attendance endpoint which returns user info + today's attendance
+      const result = await attendanceService.getTodayAttendanceByRole('admin');
       if (!result?.success) {
-        throw new Error(result?.msg || 'Failed to fetch admins');
+        throw new Error(result?.msg || 'Failed to fetch admins attendance');
       }
 
-      const adminList = result?.data || [];
+      const payload = result?.data || {};
+      const adminList = Array.isArray(payload.attendance) ? payload.attendance : [];
       setadmins(adminList);
-      if (adminList.length > 0) {
-        setHydratingAttendance(true);
-        hydrateTodayAttendanceStatus(adminList).finally(() => {
-          setHydratingAttendance(false);
-        });
-      }
+      // build quick status map
+      const statusMap = {};
+      adminList.forEach((a) => {
+        const id = a.userId || a._id;
+        if (id) statusMap[id] = a.status || 'not-marked';
+      });
+      setTodayStatusByadmin(statusMap);
+      setHydratingAttendance(false);
     } catch (error) {
       setError(error?.message || 'Failed to fetch admins');
     } finally {
@@ -48,35 +52,11 @@ const AdminList = ({ setActiveMenu , setTargetId }) => {
   const hydrateTodayAttendanceStatus = async (adminList) => {
     const statusMap = {};
 
-    await Promise.all(
-      adminList.map(async (admin) => {
-        const adminUserId = admin?.user?._id;
-
-        if (!adminUserId) {
-          statusMap[admin?._id] = 'not-marked';
-          return;
-        }
-
-        try {
-          const attendanceResponse = await attendanceService.getTodayAttendance(adminUserId);
-          const attendancePayload = attendanceResponse?.data;
-          const attendanceList = Array.isArray(attendancePayload?.attendance)
-            ? attendancePayload.attendance
-            : [];
-          const todayRecord = attendanceList[0];
-
-          statusMap[admin?._id] = todayRecord?.status || 'not-marked';
-        } catch {
-          statusMap[admin?._id] = 'not-marked';
-        }
-      })
-    );
-
-    setTodayStatusByadmin(statusMap);
+    // legacy: hydrateTodayAttendanceStatus is no longer used because we fetch consolidated payload
   };
 
   const markadminAttendance = async (admin, status) => {
-    const adminUserId = admin?.user?._id;
+    const adminUserId = admin?.userId || admin?._id;
     if (!adminUserId) {
       setFeedback({ type: 'error', text: 'Unable to mark attendance for this admin.' });
       return;
@@ -87,7 +67,7 @@ const AdminList = ({ setActiveMenu , setTargetId }) => {
       setFeedback(null);
 
       const today = new Date().toISOString().slice(0, 10);
-      const localStatus = todayStatusByadmin[admin?._id];
+      const localStatus = todayStatusByadmin[admin?._id] || todayStatusByadmin[admin?.userId];
       const hasAttendance = Boolean(localStatus && localStatus !== 'not-marked');
 
       const payload = {
@@ -107,11 +87,12 @@ const AdminList = ({ setActiveMenu , setTargetId }) => {
       setTodayStatusByadmin((prev) => ({
         ...prev,
         [admin?._id]: status,
+        [admin?.userId]: status,
       }));
 
       setFeedback({
         type: 'success',
-        text: `${admin?.user?.name || 'admin'} marked ${status}.`,
+        text: `${admin?.name || 'admin'} marked ${status}.`,
       });
     } catch (error) {
       setFeedback({
@@ -170,7 +151,8 @@ const AdminList = ({ setActiveMenu , setTargetId }) => {
       ) : (
         <div className="space-y-4">
           {admins.map((admin) => {
-            const currentStatus = todayStatusByadmin[admin?._id] || 'not-marked';
+            const currentStatus =
+              todayStatusByadmin[admin?._id] || todayStatusByadmin[admin?.userId] || todayStatusByadmin[String(admin?._id)] || 'not-marked';
             const currentStatusLabel =
               currentStatus === 'not-marked'
                 ? 'Not Marked'
@@ -183,14 +165,11 @@ const AdminList = ({ setActiveMenu , setTargetId }) => {
 
             return (
               <div key={admin?._id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-lg font-semibold text-slate-900">{admin?.user?.name || 'Unnamed admin'}</p>
-                <p className="mt-1 text-sm text-slate-600">Email: {admin?.user?.email || 'N/A'}</p>
-                <p className="text-sm text-slate-600">Phone: {admin?.user?.phone || 'N/A'}</p>
+                <p className="text-lg font-semibold text-slate-900">{admin?.name || 'Unnamed admin'}</p>
+                <p className="mt-1 text-sm text-slate-600">Email: {admin?.email || 'N/A'}</p>
+                <p className="text-sm text-slate-600">Phone: {admin?.phone || 'N/A'}</p>
                 <p className="text-sm text-slate-600">
-                  Address:{' '}
-                  {[admin?.user?.address, admin?.user?.city, admin?.user?.state, admin?.user?.pinCode]
-                    .filter(Boolean)
-                    .join(', ') || 'N/A'}
+                  Address: N/A
                 </p>
 
                 <div className="mt-3 flex items-center gap-2">

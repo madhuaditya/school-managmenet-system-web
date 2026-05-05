@@ -47,6 +47,7 @@ function App() {
             { path: 'classes', element: <DashboardContentRoute /> },
             { path: 'id-cards', element: <DashboardContentRoute /> },
             { path: 'subjects', element: <DashboardContentRoute /> },
+            { path: 'exams', element: <DashboardContentRoute /> },
             { path: 'fee-structure', element: <DashboardContentRoute /> },
             { path: 'fee-payments', element: <DashboardContentRoute /> },
             { path: 'salary-structure', element: <DashboardContentRoute /> },

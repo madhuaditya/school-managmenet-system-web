@@ -72,6 +72,27 @@ export const attendanceService = {
     const response = await apiClient.get(`/api/attendance/get-today/${userId}`);
     return response.data;
   },
+
+  // Get today's attendance for all students in a class
+  getTodayClassAttendance: async (classId) => {
+    const response = await apiClient.get(`/api/attendance/today/class/${classId}`);
+    return response.data;
+  },
+
+  // Get today's attendance for all users of a specific role in school
+  getTodayAttendanceByRole: async (role) => {
+    const response = await apiClient.get(`/api/attendance/today/role/${role}`);
+    return response.data;
+  },
+
+  // Bulk mark/update attendance for multiple users
+  bulkMarkAttendance: async (records, date) => {
+    const response = await apiClient.post('/api/attendance/bulk-mark', {
+      records,
+      date: date || new Date().toISOString().split('T')[0],
+    });
+    return response.data;
+  },
 };
 
 export default attendanceService;
