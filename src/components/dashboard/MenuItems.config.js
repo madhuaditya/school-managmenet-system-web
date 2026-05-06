@@ -35,6 +35,7 @@ export const MENU_ITEMS = {
     { id: 'my-salary', label: 'My Salary', icon: DollarSign, component: 'MySalary', path: '/dashboard/my-salary' },
     { id: 'fee-matrix', label: 'Fee Matrix', icon: BarChart2, component: 'FeeMatrix', path: '/dashboard/fee-matrix' },
     { id: 'salary-matrix', label: 'Salary Matrix', icon: BarChart2, component: 'SalaryMatrix', path: '/dashboard/salary-matrix' },
+    { id: 'broadcast', label: 'Broadcast', icon: Layers, component: 'BroadcastCenter', path: '/dashboard/broadcast' },
     { id: 'create-alert', label: 'Create Alert', icon: Send, component: 'CreateAlert', path: '/dashboard/create-alert' },
     { id: 'my-alerts', label: 'My Alerts', icon: Bell, component: 'MyAlerts', path: '/dashboard/my-alerts' },
     { id: 'leave-apply', label: 'Apply Leave', icon: Calendar, component: 'ApplyLeave', path: '/dashboard/leave-apply' },

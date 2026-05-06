@@ -57,6 +57,7 @@ function App() {
             { path: 'my-salary', element: <DashboardContentRoute /> },
             { path: 'fee-matrix', element: <DashboardContentRoute /> },
             { path: 'salary-matrix', element: <DashboardContentRoute /> },
+            { path: 'broadcast', element: <DashboardContentRoute /> },
             { path: 'create-alert', element: <DashboardContentRoute /> },
             { path: 'my-alerts', element: <DashboardContentRoute /> },
             { path: 'leave-apply', element: <DashboardContentRoute /> },

@@ -163,7 +163,7 @@ function SubjectDetailView({ subjectId, setTargetId }) {
   const topPerformers = useMemo(() => ({
     chart: { type: 'bar', backgroundColor: 'transparent' },
     title: { text: 'Top Performers' },
-    xAxis: { categories: ranking.slice(0, 8).map((item) => item.student?.user?.name || item.student?.studentId || 'Student') },
+    xAxis: { categories: ranking.slice(0, 8).map((item) => item.students?.user?.name || item.students?.studentId || 'Student') },
     yAxis: { min: 0, max: 100, title: { text: 'Percentage' } },
     series: [{ name: 'Percentage', data: ranking.slice(0, 8).map((item) => normalizeNumber(item.percentage)), color: '#0891b2' }],
     credits: { enabled: false },

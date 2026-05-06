@@ -952,7 +952,6 @@ function PerformanceForm({ targetId }) {
                 onChange={(event) => setFormData((prev) => ({ ...prev, type: event.target.value }))}
                 className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${formErrors.type ? 'border-rose-500' : 'border-slate-300'}`}
               >
-                <option value="exam">Exam</option>
                 <option value="test">Test</option>
                 <option value="assignment">Assignment</option>
               </select>

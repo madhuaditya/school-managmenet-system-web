@@ -45,6 +45,7 @@ import IDCardGenerator from '../dashboard-menus/id-cards/IDCardGenerator';
 import ApplyLeave from '../dashboard-menus/leave/ApplyLeave';
 import MyLeaves from '../dashboard-menus/leave/MyLeaves';
 import LeaveAdminReview from '../dashboard-menus/leave/LeaveAdminReview';
+import BroadcastCenter from '../dashboard-menus/broadcast/BroadcastCenter';
 
 const componentMap = {
   AdminHome,
@@ -85,6 +86,7 @@ const componentMap = {
   ApplyLeave,
   MyLeaves,
   LeaveAdminReview,
+  BroadcastCenter,
 };
 
 const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => {
@@ -111,6 +113,7 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
     'my-salary': 'MySalary',
     'create-alert': 'CreateAlert',
     'my-alerts': 'MyAlerts',
+    broadcast: 'BroadcastCenter',
     'leave-apply': 'ApplyLeave',
     'my-leaves': 'MyLeaves',
     'leave-review': 'LeaveAdminReview',
