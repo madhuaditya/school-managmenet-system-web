@@ -39,6 +39,22 @@ export const progressService = {
     return response.data;
   },
 
+  getExamProgressTemplate: async (examId, academicYear) => {
+    const query = academicYear ? `?academicYear=${encodeURIComponent(academicYear)}` : '';
+    const response = await apiClient.get(`/api/progress/exam/${examId}/template${query}`);
+    return response.data;
+  },
+
+  bulkCreateProgress: async (data) => {
+    const response = await apiClient.post('/api/progress/bulk-create', data);
+    return response.data;
+  },
+
+  bulkUpdateProgress: async (data) => {
+    const response = await apiClient.put('/api/progress/bulk-update', data);
+    return response.data;
+  },
+
   // Create/Update progress
   upsertProgress: async (studentId, data) => {
     const response = await apiClient.put(`/api/progress`, { studentId, ...data });
@@ -48,6 +64,11 @@ export const progressService = {
   // Update progress record
   updateProgress: async (id, data) => {
     const response = await apiClient.put(`/api/progress/${id}`, data);
+    return response.data;
+  },
+
+  getSubjectRanking: async (subjectId) => {
+    const response = await apiClient.get(`/api/progress/subject/${subjectId}/ranking`);
     return response.data;
   },
 
