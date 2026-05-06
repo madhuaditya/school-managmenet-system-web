@@ -21,6 +21,11 @@ export const feeManagementService = {
     return response.data;
   },
 
+  getPaymentSlipHtml: async (id) => {
+    const response = await apiClient.get(`/api/fee-management/payment/${id}/slip-html`);
+    return response.data;
+  },
+
   // Delete payment by id
   deletePayment: async (id) => {
     const response = await apiClient.delete(`/api/fee-management/payment/${id}`);

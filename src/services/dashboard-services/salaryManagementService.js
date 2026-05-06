@@ -137,6 +137,11 @@ export const salaryManagementService = {
     return response.data;
   },
 
+  getSalaryPaymentSlipHtml: async (id) => {
+    const response = await apiClient.get(`/api/salary-management/payment/${id}/slip-html`);
+    return response.data;
+  },
+
   // Delete salary payment by id
   deleteSalaryPayment: async (id) => {
     const response = await apiClient.delete(`/api/salary-management/payment/${id}`);

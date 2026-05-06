@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TableSkeleton } from '../_shared/Skeleton';
 import { formatMoney, normalizeMoneyInput } from '../_shared/money';
+import { downloadHtmlAsPdf } from '../../../utils/htmlPdf';
 import adminService from '../../../services/dashboard-services/adminService';
 import teacherService from '../../../services/dashboard-services/teacherService';
 import staffService from '../../../services/dashboard-services/staffService';
@@ -276,9 +277,23 @@ const SalaryPaymentsManager = () => {
       const result = await salaryManagementService.recordSalaryPayment(payload);
       if (!result?.success) throw new Error(result?.msg || 'Failed to record salary payment');
 
+      const staffName = selectedUser?.label || 'staff';
+      const slipHtml = result?.data?.slipHtml;
+
       setSuccess(result?.msg || 'Salary payment recorded successfully.');
       setForm(initialForm);
       await Promise.all([loadRoleSummaries(), loadUserSummary(selectedUserId)]);
+
+      if (slipHtml) {
+        try {
+          await downloadHtmlAsPdf(slipHtml, {
+            filename: `salary-slip-${staffName}-${selectedMonth}-${selectedYear}.pdf`,
+            orientation: 'portrait',
+          });
+        } catch (downloadError) {
+          setError(`Salary payment recorded, but slip download failed: ${downloadError?.message || 'Unknown error'}`);
+        }
+      }
     } catch (err) {
       setError(err?.response?.data?.msg || err?.message || 'Failed to record salary payment');
     } finally {

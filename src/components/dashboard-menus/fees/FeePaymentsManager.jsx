@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TableSkeleton } from '../_shared/Skeleton';
 import { formatMoney, normalizeMoneyInput } from '../_shared/money';
+import { downloadHtmlAsPdf } from '../../../utils/htmlPdf';
 import classService from '../../../services/dashboard-services/classService';
 import feeManagementService from '../../../services/dashboard-services/feeManagementService';
 import feeStructureService from '../../../services/dashboard-services/feeStructureService';
@@ -273,6 +274,10 @@ const FeePaymentsManager = () => {
         throw new Error(result?.msg || 'Failed to record fee payment');
       }
 
+      const paymentId = result?.data?.payment?._id;
+      const studentName = currentStudent?.name || currentStudent?.user?.name || 'student';
+      const slipHtml = result?.data?.slipHtml;
+
       setSuccess(result?.msg || 'Fee payment recorded successfully.');
       setForm(initialForm);
 
@@ -289,6 +294,17 @@ const FeePaymentsManager = () => {
       }
 
       await Promise.all([loadClassSummaries(), loadStudentSummary(selectedStudentId)]);
+
+      if (paymentId && slipHtml) {
+        try {
+          await downloadHtmlAsPdf(slipHtml, {
+            filename: `fee-slip-${studentName}-${selectedMonth}-${selectedYear}.pdf`,
+            orientation: 'portrait',
+          });
+        } catch (downloadError) {
+          setError(`Payment recorded, but slip download failed: ${downloadError?.message || 'Unknown error'}`);
+        }
+      }
     } catch (err) {
       setError(err?.response?.data?.msg || err?.message || 'Failed to record fee payment');
     } finally {

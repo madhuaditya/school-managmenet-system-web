@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { TableSkeleton } from '../_shared/Skeleton';
 import { formatMoney } from '../_shared/money';
+import { downloadHtmlAsPdf } from '../../../utils/htmlPdf';
 import feeManagementService from '../../../services/dashboard-services/feeManagementService';
 
 const PAGE_SIZE = 10;
@@ -26,6 +27,7 @@ function FeePaymentHistory() {
   const [records, setRecords] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
   const [error, setError] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
     if (!studentId) {
@@ -54,6 +56,25 @@ function FeePaymentHistory() {
       setError(err?.response?.data?.msg || err?.message || 'Failed to load fee history');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const downloadSlip = async (paymentId, record) => {
+    try {
+      setDownloadingId(paymentId);
+      const result = await feeManagementService.getPaymentSlipHtml(paymentId);
+      if (!result?.success || !result?.data?.slipHtml) {
+        throw new Error(result?.msg || 'Failed to generate fee slip');
+      }
+
+      await downloadHtmlAsPdf(result.data.slipHtml, {
+        filename: `fee-slip-${record?.month || 'month'}-${record?.year || 'year'}.pdf`,
+        orientation: 'portrait',
+      });
+    } catch (err) {
+      setError(err?.response?.data?.msg || err?.message || 'Failed to download fee slip');
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -89,6 +110,16 @@ function FeePaymentHistory() {
                   <p>Transaction: {record?.transactionId || '-'}</p>
                   <p>Remarks: {record?.remarks || '-'}</p>
                   <p>Date: {record?.paidAt ? new Date(record.paidAt).toLocaleString() : '-'}</p>
+                </div>
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => downloadSlip(record?._id, record)}
+                    disabled={downloadingId === record?._id}
+                    className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {downloadingId === record?._id ? 'Preparing Slip...' : 'Download Slip'}
+                  </button>
                 </div>
               </article>
             ))}

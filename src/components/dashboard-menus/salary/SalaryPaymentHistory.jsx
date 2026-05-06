@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { TableSkeleton } from '../_shared/Skeleton';
 import { formatMoney } from '../_shared/money';
+import { downloadHtmlAsPdf } from '../../../utils/htmlPdf';
 import salaryManagementService from '../../../services/dashboard-services/salaryManagementService';
 
 const PAGE_SIZE = 10;
@@ -22,6 +23,7 @@ function SalaryPaymentHistory() {
   const [records, setRecords] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
   const [error, setError] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
     if (!staffId) {
@@ -50,6 +52,25 @@ function SalaryPaymentHistory() {
       setError(err?.response?.data?.msg || err?.message || 'Failed to load salary history');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const downloadSlip = async (paymentId, record) => {
+    try {
+      setDownloadingId(paymentId);
+      const result = await salaryManagementService.getSalaryPaymentSlipHtml(paymentId);
+      if (!result?.success || !result?.data?.slipHtml) {
+        throw new Error(result?.msg || 'Failed to generate salary slip');
+      }
+
+      await downloadHtmlAsPdf(result.data.slipHtml, {
+        filename: `salary-slip-${record?.month || 'month'}-${record?.year || 'year'}.pdf`,
+        orientation: 'portrait',
+      });
+    } catch (err) {
+      setError(err?.response?.data?.msg || err?.message || 'Failed to download salary slip');
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -85,6 +106,16 @@ function SalaryPaymentHistory() {
                   <p>Transaction: {record?.transactionId || '-'}</p>
                   <p>Remarks: {record?.remarks || '-'}</p>
                   <p>Date: {record?.paidAt ? new Date(record.paidAt).toLocaleString() : '-'}</p>
+                </div>
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => downloadSlip(record?._id, record)}
+                    disabled={downloadingId === record?._id}
+                    className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {downloadingId === record?._id ? 'Preparing Slip...' : 'Download Slip'}
+                  </button>
                 </div>
               </article>
             ))}
