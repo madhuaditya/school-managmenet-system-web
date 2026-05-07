@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Download } from 'react-feather';
 import { TableSkeleton } from '../_shared/Skeleton';
 import { formatMoney, normalizeMoneyInput } from '../_shared/money';
 import { downloadHtmlAsPdf } from '../../../utils/htmlPdf';
@@ -70,6 +71,7 @@ const FeePaymentsManager = () => {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [downloadingSlipId, setDownloadingSlipId] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -314,6 +316,33 @@ const FeePaymentsManager = () => {
 
   const openHistory = (studentId) => navigate(`/dashboard/fee-history/${studentId}`);
 
+  const downloadCardSlip = async (card) => {
+    const latestPayment = Array.isArray(card?.payments) ? card.payments[0] : null;
+    const paymentId = latestPayment?._id;
+
+    if (!paymentId) {
+      setError('No payment slip is available for this student yet.');
+      return;
+    }
+
+    try {
+      setDownloadingSlipId(paymentId);
+      const result = await feeManagementService.getPaymentSlipHtml(paymentId);
+      if (!result?.success || !result?.data?.slipHtml) {
+        throw new Error(result?.msg || 'Failed to generate fee slip');
+      }
+
+      await downloadHtmlAsPdf(result.data.slipHtml, {
+        filename: `fee-slip-${card?.studentName || 'student'}-${selectedMonth}-${selectedYear}.pdf`,
+        orientation: 'portrait',
+      });
+    } catch (err) {
+      setError(err?.response?.data?.msg || err?.message || 'Failed to download fee slip');
+    } finally {
+      setDownloadingSlipId(null);
+    }
+  };
+
   if (loading) return <TableSkeleton />;
 
   return (
@@ -449,6 +478,18 @@ const FeePaymentsManager = () => {
                         >
                           History
                         </button>
+                        {item.status !== 'PENDING' ? (
+                          <button
+                            type="button"
+                            onClick={() => downloadCardSlip(item)}
+                            disabled={downloadingSlipId === item?.payments?.[0]?._id}
+                            className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                            aria-label={`Download fee slip for ${item.studentName}`}
+                            title="Download fee slip"
+                          >
+                            <Download size={14} />
+                          </button>
+                        ) : null}
                       </div>
                     </article>
                   ))

@@ -466,23 +466,7 @@ const FeeMatrix = () => {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            {mainChartOptions ? <HighchartsReact highcharts={Highcharts} options={mainChartOptions} /> : null}
-          </section>
-
-          {extraChartOptions ? (
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <HighchartsReact highcharts={Highcharts} options={extraChartOptions} />
-            </section>
-          ) : null}
-
-          {statusPieOptions ? (
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <HighchartsReact highcharts={Highcharts} options={statusPieOptions} />
-            </section>
-          ) : null}
-
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="mb-3 text-lg font-bold text-slate-900">Detailed Breakdown</h2>
 
             {viewMode === 'school' ? (
@@ -580,6 +564,24 @@ const FeeMatrix = () => {
               </div>
             ) : null}
           </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            {mainChartOptions ? <HighchartsReact highcharts={Highcharts} options={mainChartOptions} /> : null}
+          </section>
+
+          {extraChartOptions ? (
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <HighchartsReact highcharts={Highcharts} options={extraChartOptions} />
+            </section>
+          ) : null}
+
+          {statusPieOptions ? (
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <HighchartsReact highcharts={Highcharts} options={statusPieOptions} />
+            </section>
+          ) : null}
+
+
         </>
       ) : (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Download } from 'react-feather';
 import { TableSkeleton } from '../_shared/Skeleton';
 import { formatMoney, normalizeMoneyInput } from '../_shared/money';
 import { downloadHtmlAsPdf } from '../../../utils/htmlPdf';
@@ -80,6 +81,7 @@ const SalaryPaymentsManager = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [downloadingSlipId, setDownloadingSlipId] = useState(null);
 
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -303,6 +305,33 @@ const SalaryPaymentsManager = () => {
 
   const openHistory = (staffId) => navigate(`/dashboard/salary-history/${staffId}`);
 
+  const downloadCardSlip = async (card) => {
+    const latestPayment = Array.isArray(card?.payments) ? card.payments[0] : null;
+    const paymentId = latestPayment?._id;
+
+    if (!paymentId) {
+      setError('No salary slip is available for this user yet.');
+      return;
+    }
+
+    try {
+      setDownloadingSlipId(paymentId);
+      const result = await salaryManagementService.getSalaryPaymentSlipHtml(paymentId);
+      if (!result?.success || !result?.data?.slipHtml) {
+        throw new Error(result?.msg || 'Failed to generate salary slip');
+      }
+
+      await downloadHtmlAsPdf(result.data.slipHtml, {
+        filename: `salary-slip-${card?.staffName || 'staff'}-${selectedMonth}-${selectedYear}.pdf`,
+        orientation: 'portrait',
+      });
+    } catch (err) {
+      setError(err?.response?.data?.msg || err?.message || 'Failed to download salary slip');
+    } finally {
+      setDownloadingSlipId(null);
+    }
+  };
+
   if (loading) return <TableSkeleton />;
 
   return (
@@ -425,6 +454,18 @@ const SalaryPaymentsManager = () => {
                         >
                           History
                         </button>
+                        {item.status !== 'PENDING' ? (
+                          <button
+                            type="button"
+                            onClick={() => downloadCardSlip(item)}
+                            disabled={downloadingSlipId === item?.payments?.[0]?._id}
+                            className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                            aria-label={`Download salary slip for ${item.staffName}`}
+                            title="Download salary slip"
+                          >
+                            <Download size={14} />
+                          </button>
+                        ) : null}
                       </div>
                     </article>
                   ))

@@ -8,7 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://school-project-bac
 
 const apiClient = axios.create({
   baseURL: baseURL,
-  timeout: 12000,
+  timeout: 18000,
   headers: {
     'Content-Type': 'application/json',
   },
