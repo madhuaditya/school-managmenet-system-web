@@ -42,6 +42,7 @@ export const useAuthStore = create(
               name: result.data.name,
               email: result.data.email,
               phone: result.data.phone,
+              image: result.data.image,
               role: result.data.role?.role || result.data.role || 'user',
               school: result.data.school || null,
             },
