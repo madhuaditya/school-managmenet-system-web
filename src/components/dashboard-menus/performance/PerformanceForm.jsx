@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Highcharts from 'highcharts';
 import HighchartsReactModule from 'highcharts-react-official';
-import { Download, Edit2, Plus, Trash2, X } from 'react-feather';
+import { Download, Edit2, Plus, Trash2, X, ArrowLeft } from 'react-feather';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useAuthStore } from '../../../stores/authStore';
@@ -85,7 +85,7 @@ const initialFormData = {
   remarks: '',
 };
 
-function PerformanceForm({ targetId }) {
+function PerformanceForm({ targetId, setActiveMenu }) {
   const { id: routeId } = useParams();
   const profile = useAuthStore((state) => state.profile);
 
@@ -744,6 +744,14 @@ function PerformanceForm({ targetId }) {
 
   return (
     <div className="space-y-5">
+      <button
+        type="button"
+        onClick={() => setActiveMenu && setActiveMenu('students')}
+        className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800"
+      >
+        <ArrowLeft size={15} /> Back To Students
+      </button>
+
       {successMsg ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{successMsg}</div> : null}
       {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div> : null}
 

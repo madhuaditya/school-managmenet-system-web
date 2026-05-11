@@ -26,6 +26,8 @@ import SubjectsList from '../dashboard-menus/subjects/SubjectsList';
 import AttendanceMarkForm from '../dashboard-menus/attendance/AttendanceMarkForm';
 import MyAttendance from '../dashboard-menus/attendance/MyAttendance';
 import PerformanceForm from '../dashboard-menus/performance/PerformanceForm';
+import StudentInfo from '../dashboard-menus/students/StudentInfo';
+import BasicProfileView from '../dashboard-menus/profile/BasicProfileView';
 import ExamManagement from '../dashboard-menus/exams/ExamManagement';
 import NoticesList from '../dashboard-menus/notices/NoticesList';
 import FeeStructureList from '../dashboard-menus/fees/FeeStructureList';
@@ -66,6 +68,7 @@ const componentMap = {
   AttendanceMarkForm,
   MyAttendance,
   PerformanceForm,
+  StudentInfo,
   ExamManagement,
   NoticesList,
   FeeStructureList,
@@ -89,7 +92,41 @@ const componentMap = {
   BroadcastCenter,
 };
 
-const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => {
+const ContentArea = ({
+  activeMenu,
+  setActiveMenu,
+  targetId,
+  setTargetId,
+  searchQuery = '',
+  selectedProfileId = '',
+  selectedProfile = null,
+  clearSelectedProfile,
+}) => {
+  if (selectedProfileId) {
+    return (
+      <motion.div
+        key={selectedProfileId}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        className="h-full min-h-0 p-0"
+      >
+        <div className="flex h-full min-h-0 flex-col overflow-hidden border-none bg-white">
+          <div className="flex-1 min-h-0 overflow-y-auto bg-white">
+            <div className="p-6">
+              <BasicProfileView
+                userId={selectedProfileId}
+                selectedUser={selectedProfile}
+                onBack={clearSelectedProfile}
+              />
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   // Map menu IDs to component names
   const componentNameMap = {
     dashboard: 'AdminHome', // Will be overridden by role
@@ -130,6 +167,11 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
   // Override dashboard component based on role
   let componentName = componentNameMap[activeMenu];
 
+  // Handle detail views with targetId
+  if (activeMenu === 'students' && targetId) {
+    componentName = 'StudentInfo';
+  }
+
   // Fallback for menu keys coming from URL params or dynamic menu additions.
   if (!componentName) {
     const roleMenus = MENU_ITEMS[role] || [];
@@ -147,9 +189,9 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="p-6 md:p-8"
+        className="h-full min-h-0 p-6"
       >
-        <div className="bg-white rounded-lg p-8 text-center">
+        <div className="flex h-full min-h-0 items-center justify-center border-none bg-white">
           <p className="text-gray-500">Component not found: {componentName}</p>
         </div>
       </motion.div>
@@ -163,9 +205,20 @@ const ContentArea = ({ activeMenu, setActiveMenu , targetId , setTargetId }) => 
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="p-4 md:p-8"
+      className="h-full min-h-0 p-0"
     >
-      <Component setActiveMenu={setActiveMenu} targetId={targetId} setTargetId={setTargetId} />
+        <div className="flex h-full min-h-0 flex-col overflow-hidden border-none bg-white">
+          <div className="flex-1 min-h-0 overflow-y-auto bg-white">
+            <div className="p-6">
+              <Component
+                setActiveMenu={setActiveMenu}
+                targetId={targetId}
+                setTargetId={setTargetId}
+                searchQuery={searchQuery}
+              />
+            </div>
+          </div>
+        </div>
     </motion.div>
   );
 };
