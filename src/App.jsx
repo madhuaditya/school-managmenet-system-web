@@ -10,8 +10,6 @@ import Dashboard from './pages/Dashboard';
 import DashboardContentRoute from './components/dashboard/DashboardContentRoute';
 import SalaryPaymentHistoryPage from './pages/SalaryPaymentHistoryPage';
 import FeePaymentHistoryPage from './pages/FeePaymentHistoryPage';
-import StudentInfoPage from './pages/StudentInfoPage';
-import StudentPerformancePage from './pages/StudentPerformancePage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import SchoolResetPasswordPage from './pages/SchoolResetPasswordPage';
 import NotFound from './pages/NotFound';
@@ -71,24 +69,9 @@ function App() {
             { path: ':menu/:id', element: <DashboardContentRoute /> },
           ],
         },
-        {
-          path: ROUTES.studentInfo,
-          element: (
-            <ProtectedRoute>
-              <StudentInfoPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: ROUTES.studentPerformance,
-          element: (
-            <ProtectedRoute>
-              <StudentPerformancePage />
-            </ProtectedRoute>
-          ),
-        },
       ],
-    },
+    }, 
+    { path: ROUTES.resetPassword, element: <ResetPasswordPage /> },
     { path: '/home', element: <Navigate to={ROUTES.home} replace /> },
     { path: '*', element: <NotFound /> },
   ]);

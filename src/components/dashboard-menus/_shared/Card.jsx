@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 const Card = ({ title, value, icon: Icon, bgColor = 'bg-blue-50', textColor = 'text-blue-600', onClick = null }) => {
   return (
     <motion.div
-      whileHover={{ scale: 1.02, y: -5 }}
+      // whileHover={{ scale: 1.03, y: 0 }}
       transition={{ duration: 0.2 }}
       onClick={onClick}
       className={`${onClick ? 'cursor-pointer' : ''} ${bgColor} rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow`}

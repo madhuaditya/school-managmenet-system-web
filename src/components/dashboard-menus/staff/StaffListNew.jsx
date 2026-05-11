@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, X, Calendar, Eye } from 'react-feather';
 import { useNavigate } from 'react-router-dom';
 import { AgGridReact } from 'ag-grid-react';
@@ -9,8 +9,9 @@ import { TableSkeleton } from '../_shared/Skeleton';
 import staffService from '../../../services/dashboard-services/staffService';
 import attendanceService from '../../../services/dashboard-services/attendanceService';
 import { toast } from 'react-toastify';
+import { matchesSearchText } from '../../dashboard/dashboardSearch';
 
-const StaffListNew = ({ setActiveMenu, setTargetId }) => {
+const StaffListNew = ({ setActiveMenu, setTargetId, searchQuery = '' }) => {
   const navigate = useNavigate();
   const gridRef = useRef(null);
 
@@ -137,6 +138,20 @@ const StaffListNew = ({ setActiveMenu, setTargetId }) => {
     );
   }, [attendanceMap]);
 
+  const filteredStaff = useMemo(() => {
+    return staff.filter((staffMember) => matchesSearchText(searchQuery, [
+      staffMember?.name,
+      staffMember?.username,
+      staffMember?.email,
+      staffMember?.phone,
+      staffMember?.user?.name,
+      staffMember?.user?.username,
+      staffMember?.user?.email,
+      staffMember?.user?.phone,
+      staffMember?.designation,
+    ]));
+  }, [staff, searchQuery]);
+
   const ActionCellRenderer = useCallback(
     ({ data }) => {
       const staffId = data?.user?._id;
@@ -230,18 +245,18 @@ const StaffListNew = ({ setActiveMenu, setTargetId }) => {
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-slate-900">Staff Attendance</h1>
-        <p className="mt-1 text-sm text-slate-600">{staff.length} staff members found</p>
+        <p className="mt-1 text-sm text-slate-600">{filteredStaff.length} staff members found</p>
       </div>
 
       {/* Bulk action toolbar */}
-      {staff.length > 0 && (
+      {filteredStaff.length > 0 && (
         <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <p className="text-sm font-semibold text-slate-900">
                 {selectedRows.length} staff{selectedRows.length !== 1 ? ' members' : ' member'} selected
               </p>
-              <p className="text-xs text-slate-600">Total staff: {staff.length}</p>
+              <p className="text-xs text-slate-600">Total staff: {filteredStaff.length}</p>
             </div>
 
             {selectedRows.length > 0 && (
@@ -273,15 +288,15 @@ const StaffListNew = ({ setActiveMenu, setTargetId }) => {
       {/* AG-Grid Table */}
       {loadingAttendance ? (
         <TableSkeleton />
-      ) : staff.length === 0 ? (
+      ) : filteredStaff.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-600">
-          No staff members found.
+          {searchQuery ? 'No staff members match your search.' : 'No staff members found.'}
         </div>
       ) : (
         <div className="ag-theme-quartz" style={{ height: '500px', width: '100%' }}>
           <AgGridReact
             ref={gridRef}
-            rowData={staff}
+            rowData={filteredStaff}
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
             rowSelection="multiple"

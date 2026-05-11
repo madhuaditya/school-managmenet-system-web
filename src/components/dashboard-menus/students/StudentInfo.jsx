@@ -22,9 +22,10 @@ const InfoRow = ({ label, value }) => (
   </div>
 );
 
-const StudentInfo = () => {
+const StudentInfo = ({ targetId, setActiveMenu }) => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id: routeId } = useParams();
+  const selectedId = routeId || targetId;
 
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -47,7 +48,7 @@ const StudentInfo = () => {
   }, [student]);
 
   const fetchStudent = useCallback(async () => {
-    if (!id) {
+    if (!selectedId) {
       setLoading(false);
       setError('Student id is missing in route.');
       return;
@@ -56,7 +57,7 @@ const StudentInfo = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await studentService.getStudent(id);
+      const response = await studentService.getStudent(selectedId);
       if (!response?.success || !response?.data) {
         throw new Error(response?.msg || 'Failed to fetch student info');
       }
@@ -66,7 +67,7 @@ const StudentInfo = () => {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [selectedId]);
 
   useEffect(() => {
     fetchStudent();
@@ -100,15 +101,15 @@ const StudentInfo = () => {
     <div className="space-y-4">
       <button
         type="button"
-        onClick={() => navigate(ROUTES.dashboard)}
+        onClick={() => setActiveMenu && setActiveMenu('students')}
         className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800"
       >
-        <ArrowLeft size={15} /> Back To Dashboard
+        <ArrowLeft size={15} /> Back To Students
       </button>
 
       <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-5 shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900">{student?.name || 'Student Profile'}</h1>
-        <p className="mt-1 text-sm text-slate-600">Student ID Route: {id}</p>
+        <p className="mt-1 text-sm text-slate-600">Student ID Route: {selectedId}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -173,7 +174,7 @@ const StudentInfo = () => {
 
         <button
           type="button"
-          onClick={() => navigate(getStudentPerformanceRoute(id))}
+          onClick={() => navigate(getStudentPerformanceRoute(selectedId))}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
         >
           <BarChart2 size={16} /> Show Performance
