@@ -295,6 +295,7 @@ const StaffListNew = ({ setActiveMenu, setTargetId, searchQuery = '' }) => {
       ) : (
         <div className="ag-theme-quartz" style={{ height: '500px', width: '100%' }}>
           <AgGridReact
+          rowHeight={35}
             ref={gridRef}
             rowData={filteredStaff}
             columnDefs={columnDefs}

@@ -108,47 +108,47 @@ const BasicProfileView = ({ userId, selectedUser, onBack }) => {
             )}
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-slate-900">{profile?.name || 'User Profile'}</h1>
-            <p className="mt-1 text-sm text-slate-600">@{profile?.username || 'username'}</p>
+            <h1 className="text-2xl font-bold text-slate-900">{profile?.name || selectedUser.name || 'User Profile'}</h1>
+            <p className="mt-1 text-sm text-slate-600">@{profile?.username || selectedUser.username || 'username'}</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <InfoSection title="Basic Information">
-          <InfoRow label="Name" value={profile?.name} />
-          <InfoRow label="Username" value={profile?.username} />
-          <InfoRow label="Email" value={profile?.email} />
-          <InfoRow label="Phone" value={profile?.phone} />
-          <InfoRow label="Role" value={profile?.role?.role || profile?.role} />
+          <InfoRow label="Name" value={profile?.name || selectedUser.name || 'N/A'} />
+          <InfoRow label="Username" value={profile?.username || selectedUser.username || 'N/A'} />
+          <InfoRow label="Email" value={profile?.email || selectedUser.email || 'N/A'} />
+          <InfoRow label="Phone" value={profile?.phone || selectedUser.phone || 'N/A'} />
+          <InfoRow label="Role" value={profile?.role?.role || profile?.role || selectedUser.role || 'N/A'} />
         </InfoSection>
 
         <InfoSection title="School Information">
-          <InfoRow label="School" value={profile?.school?.schoolName || profile?.school?.name} />
-          <InfoRow label="School Id" value={profile?.school?._id} />
-          <InfoRow label="User Id" value={profile?._id} />
-          <InfoRow label="Member Since" value={formatDate(profile?.createdAt)} />
+          <InfoRow label="School" value={profile?.school?.schoolName || profile?.school?.name || 'N/A'} />
+          <InfoRow label="School Id" value={profile?.school?._id || 'N/A'} />
+          <InfoRow label="User Id" value={profile?._id || 'N/A'} />
+          <InfoRow label="Member Since" value={formatDate(profile?.createdAt || selectedUser.createdAt || 'N/A')} />
         </InfoSection>
       </div>
 
       {(profile?.address || profile?.city || profile?.state || profile?.pinCode) && (
         <InfoSection title="Address">
-          <InfoRow label="Address" value={profile?.address} />
-          <InfoRow label="City" value={profile?.city} />
-          <InfoRow label="State" value={profile?.state} />
-          <InfoRow label="Pin Code" value={profile?.pinCode} />
+          <InfoRow label="Address" value={profile?.address || selectedUser.address || 'N/A'} />
+          <InfoRow label="City" value={profile?.city || selectedUser.city || 'N/A'} />
+          <InfoRow label="State" value={profile?.state || selectedUser.state || 'N/A'} />
+          <InfoRow label="Pin Code" value={profile?.pinCode || selectedUser.pinCode || 'N/A'} />
         </InfoSection>
       )}
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
-          <Mail size={16} className="text-slate-400" /> Email
+          <Mail size={16} className="text-slate-400" /> Email {profile?.email || selectedUser.email || 'N/A'}
         </div>
         <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
-          <Phone size={16} className="text-slate-400" /> Phone
+          <Phone size={16} className="text-slate-400" /> Phone {profile?.phone || selectedUser.phone || 'N/A'}
         </div>
         <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
-          <User size={16} className="text-slate-400" /> Profile
+          <User size={16} className="text-slate-400" /> Profile {profile?.username || selectedUser.username || 'N/A'}
         </div>
       </div>
 

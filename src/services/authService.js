@@ -1,7 +1,12 @@
 import apiClient from './apiClient';
 
 export const loginUserApi = async (payload) => {
-  const response = await apiClient.post('/api/auth/login', payload);
+  const response = await apiClient.post('/api/auth/verify-otp', payload);
+  return response.data;
+};
+
+export const sendOTPApi = async ({ username, password }) => {
+  const response = await apiClient.post('/api/auth/login', { username, password });
   return response.data;
 };
 
