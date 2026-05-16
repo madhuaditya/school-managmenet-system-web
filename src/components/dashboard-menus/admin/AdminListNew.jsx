@@ -289,6 +289,7 @@ const AdminListNew = ({ setActiveMenu, setTargetId, searchQuery = '' }) => {
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
             rowSelection="multiple"
+            rowHeight={35}
             onSelectionChanged={onSelectionChanged}
             pagination={true}
             paginationPageSize={15}

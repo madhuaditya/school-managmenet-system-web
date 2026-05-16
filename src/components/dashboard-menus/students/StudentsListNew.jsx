@@ -510,6 +510,7 @@ const StudentsList = ({ searchQuery = '' }) => {
             paginationPageSize={15}
             domLayout="normal"
             animateRows={true}
+            rowHeight={35}
           />
         </div>
       )}
