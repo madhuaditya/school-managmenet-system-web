@@ -5,6 +5,7 @@ import Card from '../_shared/Card';
 import { CardSkeleton } from '../_shared/Skeleton';
 import NoticeSection from './NoticeSection';
 import dashboardService from '../../../services/dashboard-services/dashboardService';
+import CalendarPage from '../../calander/calander';
 
 const AdminHome = () => {
   const [stats, setStats] = useState(null);
@@ -151,7 +152,9 @@ const AdminHome = () => {
         </div>
 
         <NoticeSection className="xl:col-span-2" />
+        
       </div>
+      <CalendarPage />
     </div>
   );
 };
