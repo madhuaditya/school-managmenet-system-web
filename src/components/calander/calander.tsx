@@ -1,834 +1,737 @@
-// import React, { useMemo } from "react";
+import { useCallback, useMemo, useState } from 'react';
+import { AlertCircle, Calendar as CalendarIcon, Clock, MapPin, Moon, RefreshCw, Sun, Users } from 'react-feather';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
+import calendarService from '../../services/dashboard-services/calendarService';
 
-// import FullCalendar from "@fullcalendar/react";
-// import dayGridPlugin from "@fullcalendar/daygrid";
-// import timeGridPlugin from "@fullcalendar/timegrid";
-// import interactionPlugin from "@fullcalendar/interaction";
-// import listPlugin from "@fullcalendar/list";
-// import './calander.css';
+type CalendarRange = {
+  start: string;
+  end: string;
+};
 
-// export default function Calendar() {
+type CalendarEventItem = {
+  _id: string;
+  title: string;
+  description?: string;
+  location?: string;
+  startDate: string;
+  endDate?: string;
+  timezone?: string;
+  allDay?: boolean;
+  color?: string;
+  visibility?: string;
+  status?: string;
+  source?: string;
+  attendees?: Array<Record<string, unknown>>;
+  reminders?: Array<Record<string, unknown>>;
+};
 
-//   const events = useMemo(() => [
-//     {
-//       id: "1",
-//       title: "Team Standup",
-//       start: "2026-05-01T10:00:00",
-//       end: "2026-05-01T11:00:00",
-//     },
-//     {
-//       id: "2",
-//       title: "UI Review",
-//       start: "2026-05-03T14:00:00",
-//       end: "2026-05-03T15:30:00",
-//     },
-//     {
-//       id: "3",
-//       title: "Client Meeting",
-//       start: "2026-05-05T12:00:00",
-//       end: "2026-05-05T13:00:00",
-//     },
-//     {
-//       id: "4",
-//       title: "Backend Sprint",
-//       start: "2026-05-08",
-//       end: "2026-05-11",
-//     },
-//     {
-//       id: "5",
-//       title: "Design Workshop",
-//       start: "2026-05-12T09:00:00",
-//       end: "2026-05-12T12:00:00",
-//     },
-//     {
-//       id: "6",
-//       title: "Product Launch 🚀",
-//       start: "2026-05-15T18:00:00",
-//     },
-//     {
-//       id: "7",
-//       title: "Marketing Sync",
-//       start: "2026-05-18T16:00:00",
-//     },
-//     {
-//       id: "8",
-//       title: "Hackathon",
-//       start: "2026-05-20",
-//       end: "2026-05-22",
-//     },
-//     {
-//       id: "9",
-//       title: "Interview Round",
-//       start: "2026-05-24T11:30:00",
-//     },
-//     {
-//       id: "10",
-//       title: "Monthly Review",
-//       start: "2026-05-28T15:00:00",
-//     },
-//   ], []);
+const DEFAULT_RANGE_DAYS = 45;
 
-//   return (
-//     <div className="calendar-wrapper">
-//       <FullCalendar
-//         plugins={[
-//           dayGridPlugin,
-//           timeGridPlugin,
-//           interactionPlugin,
-//           listPlugin,
-//         ]}
-//         initialView="dayGridMonth"
-//         headerToolbar={{
-//           left: "prev,next today",
-//           center: "title",
-//           right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
-//         }}
-//         editable={true}
-//         selectable={true}
-//         dayMaxEvents={3}
-//         events={events}
-//         height="90vh"
-//       />
+const formatDateTime = (value: string | Date | null | undefined, includeTime = true) => {
+  if (!value) return '—';
 
-//       <style>{`
-//         * {
-//           box-sizing: border-box;
-//         }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
 
-//         body {
-//           margin: 0;
-//           background: #6288e1;
-//           font-family: Inter, sans-serif;
-//         }
+  return new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'medium',
+    ...(includeTime ? { timeStyle: 'short' as const } : {}),
+  }).format(date);
+};
 
-//         .calendar-wrapper {
-//           padding: 24px;
-//           min-height: 100vh;
-//           background: linear-gradient(
-//             135deg,
-//             #142e9f,
-//             #3a61bd,
-//             #88a7e9
-//           );
-//         }
+const getRangeBounds = (start: Date, end: Date): CalendarRange => ({
+  start: start.toISOString(),
+  end: end.toISOString(),
+});
 
-//         .fc {
-//           background: rgba(40, 87, 197, 0.9);
-//           padding: 20px;
-//           border-radius: 24px;
-//           color: white;
-//           box-shadow:
-//             0 10px 40px rgba(0,0,0,0.4);
-//         }
-
-//         .fc-toolbar-title {
-//           font-size: 24px !important;
-//           font-weight: 700;
-//           color: white;
-//         }
-
-//         .fc-button {
-//           background: #286cda !important;
-//           border: none !important;
-//           color: white !important;
-//           padding: 8px 14px !important;
-//           border-radius: 12px !important;
-//           transition: 0.2s ease;
-//         }
-
-//         .fc-button:hover {
-//           background: #1464d3 !important;
-//         }
-
-//         .fc-button-active {
-//           background: #2563eb !important;
-//         }
-
-//         .fc-theme-standard td,
-//         .fc-theme-standard th,
-//         .fc-theme-standard .fc-scrollgrid {
-//           border-color: rgba(255,255,255,0.08);
-//         }
-
-//         .fc-col-header-cell {
-//           background: rgba(255,255,255,0.03);
-//           padding: 14px 0;
-//         }
-
-//         .fc-col-header-cell-cushion {
-//           color: #cbd5e1;
-//           text-decoration: none;
-//           font-weight: 600;
-//         }
-
-//         .fc-daygrid-day {
-//           transition: 0.2s ease;
-//         }
-
-//         .fc-daygrid-day:hover {
-//           background: rgba(255,255,255,0.03);
-//         }
-
-//         .fc-daygrid-day-number {
-//           color: #f8fafc;
-//           text-decoration: none;
-//           padding: 10px;
-//           font-size: 14px;
-//         }
-
-//         .fc-day-today {
-//           background: rgba(37, 99, 235, 0.18) !important;
-//         }
-
-//         .fc-event {
-//           border: none !important;
-//           border-radius: 10px !important;
-//           padding: 4px 8px;
-//           font-size: 13px;
-//           font-weight: 500;
-//           background: linear-gradient(
-//             135deg,
-//             #2563eb,
-//             #7c3aed
-//           ) !important;
-//           box-shadow:
-//             0 4px 12px rgba(37,99,235,0.3);
-//         }
-
-//         .fc-event:hover {
-//           transform: translateY(-1px);
-//           cursor: pointer;
-//         }
-
-//         .fc-list {
-//           border-radius: 16px;
-//           overflow: hidden;
-//         }
-
-//         .fc-list-day-cushion {
-//           background: #111827 !important;
-//         }
-
-//         .fc-list-event:hover td {
-//           background: rgba(255,255,255,0.04) !important;
-//         }
-
-//         .fc-scrollgrid {
-//           border-radius: 18px;
-//           overflow: hidden;
-//         }
-
-//         @media (max-width: 768px) {
-
-//           .calendar-wrapper {
-//             padding: 12px;
-//           }
-
-//           .fc-toolbar {
-//             display: flex;
-//             flex-direction: column;
-//             gap: 12px;
-//           }
-
-//           .fc-toolbar-title {
-//             font-size: 18px !important;
-//           }
-
-//           .fc-button {
-//             padding: 6px 10px !important;
-//             font-size: 12px !important;
-//           }
-//         }
-//       `}</style>
-//     </div>
-//   );
-// }
-
-import React, { useMemo, useState } from "react";
-
-import FullCalendar from "@fullcalendar/react";
-
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import listPlugin from "@fullcalendar/list";
+const toCalendarEvent = (item: CalendarEventItem, darkMode: boolean) => ({
+  id: item._id,
+  title: item.title,
+  start: item.startDate,
+  end: item.endDate,
+  allDay: Boolean(item.allDay),
+  backgroundColor: item.color || (darkMode ? '#6366f1' : '#2563eb'),
+  borderColor: item.color || (darkMode ? '#6366f1' : '#2563eb'),
+  textColor: '#ffffff',
+  extendedProps: {
+    ...item,
+    attendees: Array.isArray(item.attendees) ? item.attendees : [],
+    reminders: Array.isArray(item.reminders) ? item.reminders : [],
+  },
+});
 
 export default function Calendar() {
-
   const [darkMode, setDarkMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [events, setEvents] = useState<CalendarEventItem[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [range, setRange] = useState<CalendarRange | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
 
-  const events = useMemo(() => [
-    {
-      title: "Team Meeting",
-      date: "2026-05-03",
-    },
-    {
-      title: "UI Review",
-      date: "2026-05-06",
-    },
-    {
-      title: "Project Demo",
-      date: "2026-05-10",
-    },
-    {
-      title: "Client Call",
-      date: "2026-05-14",
-    },
-    {
-      title: "Hackathon 🚀",
-      date: "2026-05-20",
-    },
-    {
-      title: "Monthly Review",
-      date: "2026-05-28",
-    },
-  ], []);
+  const loadEvents = useCallback(async (nextRange: CalendarRange) => {
+    if (!nextRange?.start || !nextRange?.end) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await calendarService.getEvents({
+        page: 1,
+        size: 100,
+        dateFrom: nextRange.start,
+        dateTo: nextRange.end,
+      });
+
+      if (!response?.success) {
+        throw new Error(response?.msg || 'Failed to load calendar events');
+      }
+
+      const items = Array.isArray(response?.data?.items) ? (response.data.items as CalendarEventItem[]) : [];
+      setEvents(items);
+      setSelectedEventId((currentId) => {
+        if (currentId && items.some((item) => item._id === currentId)) {
+          return currentId;
+        }
+
+        return items[0]?._id || '';
+      });
+      setLastSyncedAt(new Date());
+    } catch (err: any) {
+      setEvents([]);
+      setSelectedEventId('');
+      setError(err?.response?.data?.msg || err?.message || 'Failed to load calendar events');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleDatesSet = useCallback((arg: { start: Date; end: Date }) => {
+    const nextRange = getRangeBounds(arg.start, arg.end);
+    setRange(nextRange);
+    void loadEvents(nextRange);
+  }, [loadEvents]);
+
+  const handleEventClick = useCallback((info: { event: { id: string } }) => {
+    setSelectedEventId(info.event.id || '');
+  }, []);
+
+  const refreshEvents = useCallback(() => {
+    if (range) {
+      void loadEvents(range);
+      return;
+    }
+
+    const fallbackRange = getRangeBounds(new Date(), new Date(Date.now() + DEFAULT_RANGE_DAYS * 24 * 60 * 60 * 1000));
+    setRange(fallbackRange);
+    void loadEvents(fallbackRange);
+  }, [loadEvents, range]);
+
+  const calendarEvents = useMemo(
+    () => events.map((item) => toCalendarEvent(item, darkMode)),
+    [darkMode, events],
+  );
+
+  const selectedEvent = useMemo(
+    () => events.find((item) => item._id === selectedEventId) || events[0] || null,
+    [events, selectedEventId],
+  );
+
+  const summary = useMemo(() => {
+    const total = events.length;
+    const upcoming = events.filter((item) => new Date(item.startDate).getTime() >= Date.now()).length;
+    const publicCount = events.filter((item) => item.visibility === 'public').length;
+
+    return { total, upcoming, publicCount };
+  }, [events]);
 
   return (
-    <div className={darkMode ? "calendar-wrapper dark" : "calendar-wrapper light"}>
-
-      {/* Header */}
+    <section className={darkMode ? 'calendar-shell dark' : 'calendar-shell light'}>
       <div className="calendar-topbar">
+        <div>
+          <p className="calendar-eyebrow">
+            <CalendarIcon size={14} />
+            School calendar
+          </p>
+          <h1 className="calendar-heading">Events at a glance</h1>
+          <p className="calendar-subtitle">Live school events pulled from the calendar service.</p>
+        </div>
 
-        <h1 className="calendar-heading">
-          School Calendar
-        </h1>
-
-        <button
-          className="theme-toggle-btn"
-          onClick={() => setDarkMode(!darkMode)}
-        >
-          {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-        </button>
-
+        <div className="calendar-actions">
+          <button type="button" className="calendar-action-btn" onClick={() => setDarkMode((value) => !value)}>
+            {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+            {darkMode ? 'Light' : 'Dark'}
+          </button>
+          <button type="button" className="calendar-action-btn secondary" onClick={refreshEvents} disabled={loading}>
+            <RefreshCw size={16} className={loading ? 'spin' : ''} />
+            Refresh
+          </button>
+        </div>
       </div>
 
-      <FullCalendar
-        plugins={[
-          dayGridPlugin,
-          timeGridPlugin,
-          interactionPlugin,
-          listPlugin,
-        ]}
-        initialView="dayGridMonth"
-        editable={true}
-        selectable={true}
-        dayMaxEvents={3}
-        height="85vh"
-        events={events}
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
-        }}
-      />
+      <div className="calendar-metrics">
+        <div className="calendar-metric-card">
+          <span>Total</span>
+          <strong>{summary.total}</strong>
+        </div>
+        <div className="calendar-metric-card">
+          <span>Upcoming</span>
+          <strong>{summary.upcoming}</strong>
+        </div>
+        <div className="calendar-metric-card">
+          <span>Public</span>
+          <strong>{summary.publicCount}</strong>
+        </div>
+        <div className="calendar-metric-card calendar-metric-card-wide">
+          <span>Last sync</span>
+          <strong>{lastSyncedAt ? formatDateTime(lastSyncedAt) : 'Not synced yet'}</strong>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="calendar-alert">
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      ) : null}
+
+      <div className="calendar-layout">
+        <div className="calendar-panel calendar-panel-main">
+          <div className="calendar-panel-inner">
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+              initialView="dayGridMonth"
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+              }}
+              datesSet={handleDatesSet}
+              eventClick={handleEventClick}
+              events={calendarEvents}
+              height="auto"
+              dayMaxEvents={3}
+              selectable={false}
+              editable={false}
+              nowIndicator
+              eventDisplay="block"
+              moreLinkClick="popover"
+            />
+
+            {loading ? <div className="calendar-loading">Loading calendar events…</div> : null}
+          </div>
+        </div>
+
+        <aside className="calendar-panel calendar-panel-side">
+          <h2 className="calendar-side-title">Event details</h2>
+
+          {selectedEvent ? (
+            <div className="calendar-detail-card">
+              <div className="calendar-detail-header">
+                <h3>{selectedEvent.title}</h3>
+                <span className={`status-pill ${selectedEvent.status || 'confirmed'}`}>
+                  {selectedEvent.status || 'confirmed'}
+                </span>
+              </div>
+
+              <p className="calendar-detail-description">
+                {selectedEvent.description || 'No description provided.'}
+              </p>
+
+              <div className="calendar-detail-row">
+                <Clock size={16} />
+                <span>
+                  {formatDateTime(selectedEvent.startDate)}
+                  {selectedEvent.endDate ? ` → ${formatDateTime(selectedEvent.endDate)}` : ''}
+                </span>
+              </div>
+
+              {selectedEvent.location ? (
+                <div className="calendar-detail-row">
+                  <MapPin size={16} />
+                  <span>{selectedEvent.location}</span>
+                </div>
+              ) : null}
+
+              <div className="calendar-detail-row">
+                <Users size={16} />
+                <span>{Array.isArray(selectedEvent.attendees) ? selectedEvent.attendees.length : 0} attendee(s)</span>
+              </div>
+
+              <div className="calendar-detail-grid">
+                <div>
+                  <span>Visibility</span>
+                  <strong>{selectedEvent.visibility || 'private'}</strong>
+                </div>
+                <div>
+                  <span>Source</span>
+                  <strong>{selectedEvent.source || 'internal'}</strong>
+                </div>
+                <div>
+                  <span>Timezone</span>
+                  <strong>{selectedEvent.timezone || 'Asia/Kolkata'}</strong>
+                </div>
+                <div>
+                  <span>All day</span>
+                  <strong>{selectedEvent.allDay ? 'Yes' : 'No'}</strong>
+                </div>
+              </div>
+
+              {Array.isArray(selectedEvent.reminders) && selectedEvent.reminders.length ? (
+                <div className="calendar-reminders">
+                  <span className="calendar-mini-label">Reminders</span>
+                  <ul>
+                    {selectedEvent.reminders.map((reminder: any, index: number) => (
+                      <li key={`${selectedEvent._id}-reminder-${index}`}>
+                        {reminder?.type || 'notification'} • {reminder?.minutesBefore ?? 0} min before
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="calendar-empty-state">
+              <CalendarIcon size={24} />
+              <p>No event selected.</p>
+              <span>Pick an event on the calendar to see details here.</span>
+            </div>
+          )}
+        </aside>
+      </div>
 
       <style>{`
-
-        * {
-          box-sizing: border-box;
+        .calendar-shell {
+          border-radius: 24px;
+          padding: 20px;
+          border: 1px solid rgba(148, 163, 184, 0.18);
+          box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+          transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
-        body {
-          margin: 0;
-          font-family: Inter, sans-serif;
+        .calendar-shell.light {
+          background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+          color: #0f172a;
         }
 
-        .calendar-wrapper {
-          min-height: 100vh;
-          padding: 24px;
-          transition: all 0.3s ease;
+        .calendar-shell.dark {
+          background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+          color: #e2e8f0;
+          border-color: rgba(255, 255, 255, 0.08);
         }
-
-        /* =========================
-           DARK MODE
-        ========================= */
-
-      /* =========================
-   PREMIUM DARK MODE THEME
-========================= */
-
-.calendar-wrapper.dark {
-  min-height: 100vh;
-
-  background:
-    radial-gradient(circle at top left, #1e3a8a 0%, transparent 30%),
-    radial-gradient(circle at bottom right, #312e81 0%, transparent 30%),
-    linear-gradient(
-      135deg,
-      #020617,
-      #0f172a,
-      #111827
-    );
-
-  transition: all 0.3s ease;
-}
-
-
-/* MAIN CALENDAR */
-
-.calendar-wrapper.dark .fc {
-  background: rgba(15, 23, 42, 0.88);
-
-  backdrop-filter: blur(18px);
-
-  border: 1px solid rgba(255,255,255,0.08);
-
-  border-radius: 28px;
-
-  padding: 24px;
-
-  color: white;
-
-  box-shadow:
-    0 8px 32px rgba(0,0,0,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.04);
-}
-
-
-/* HEADER */
-
-.calendar-wrapper.dark .calendar-heading {
-  color: #f8fafc;
-
-  font-size: 30px;
-
-  font-weight: 800;
-
-  letter-spacing: -0.5px;
-}
-
-
-/* TOOLBAR TITLE */
-
-.calendar-wrapper.dark .fc-toolbar-title {
-  color: #f8fafc;
-
-  font-size: 26px !important;
-
-  font-weight: 700;
-}
-
-
-/* BUTTONS */
-
-.calendar-wrapper.dark .fc-button {
-  background: rgba(255,255,255,0.06) !important;
-
-  backdrop-filter: blur(12px);
-
-  color: #e2e8f0 !important;
-
-  border: 1px solid rgba(255,255,255,0.08) !important;
-
-  border-radius: 14px !important;
-
-  padding: 10px 18px !important;
-
-  margin: 0 6px !important;
-
-  font-weight: 600 !important;
-
-  transition: all 0.25s ease !important;
-
-  box-shadow:
-    0 4px 12px rgba(0,0,0,0.2);
-}
-
-.calendar-wrapper.dark .fc-button:hover {
-  background: rgba(255,255,255,0.12) !important;
-
-  transform: translateY(-1px);
-
-  box-shadow:
-    0 6px 16px rgba(0,0,0,0.3);
-}
-
-
-/* ACTIVE BUTTON */
-
-.calendar-wrapper.dark .fc-button-active {
-  background: linear-gradient(
-    135deg,
-    #2563eb,
-    #7c3aed
-  ) !important;
-
-  color: white !important;
-
-  border: none !important;
-
-  box-shadow:
-    0 6px 20px rgba(37,99,235,0.4);
-}
-
-
-/* GRID */
-
-.calendar-wrapper.dark .fc-theme-standard td,
-.calendar-wrapper.dark .fc-theme-standard th,
-.calendar-wrapper.dark .fc-theme-standard .fc-scrollgrid {
-  border-color: rgba(255,255,255,0.06);
-}
-
-
-/* HEADER DAYS */
-
-.calendar-wrapper.dark .fc-col-header-cell {
-  background: rgba(255,255,255,0.03);
-
-  padding: 16px 0;
-
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.calendar-wrapper.dark .fc-col-header-cell-cushion {
-  color: #cbd5e1;
-
-  text-decoration: none;
-
-  font-weight: 600;
-
-  letter-spacing: 0.3px;
-}
-
-
-/* DAY CELLS */
-
-.calendar-wrapper.dark .fc-daygrid-day {
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease;
-}
-
-.calendar-wrapper.dark .fc-daygrid-day:hover {
-  background: rgba(255,255,255,0.03);
-}
-
-
-/* DAY NUMBERS */
-
-.calendar-wrapper.dark .fc-daygrid-day-number {
-  color: #f8fafc;
-
-  text-decoration: none;
-
-  padding: 12px;
-
-  font-size: 14px;
-
-  font-weight: 500;
-}
-
-
-/* TODAY */
-
-.calendar-wrapper.dark .fc-day-today {
-  background:
-    linear-gradient(
-      135deg,
-      rgba(37,99,235,0.18),
-      rgba(124,58,237,0.12)
-    ) !important;
-}
-
-
-/* EVENTS */
-
-.calendar-wrapper.dark .fc-event {
-  border: none !important;
-
-  border-radius: 12px !important;
-
-  padding: 6px 10px;
-
-  font-size: 13px;
-
-  font-weight: 600;
-
-  letter-spacing: 0.2px;
-
-  background: linear-gradient(
-    135deg,
-    #2563eb,
-    #7c3aed
-  ) !important;
-
-  box-shadow:
-    0 4px 16px rgba(37,99,235,0.35);
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.calendar-wrapper.dark .fc-event:hover {
-  transform: translateY(-2px);
-
-  box-shadow:
-    0 8px 22px rgba(37,99,235,0.45);
-
-  cursor: pointer;
-}
-
-
-/* LIST VIEW */
-
-.calendar-wrapper.dark .fc-list {
-  border-radius: 18px;
-
-  overflow: hidden;
-}
-
-.calendar-wrapper.dark .fc-list-day-cushion {
-  background: rgba(255,255,255,0.03) !important;
-
-  color: #f8fafc;
-}
-
-.calendar-wrapper.dark .fc-list-event:hover td {
-  background: rgba(255,255,255,0.04) !important;
-}
-
-
-/* SCROLL GRID */
-
-.calendar-wrapper.dark .fc-scrollgrid {
-  border-radius: 22px;
-
-  overflow: hidden;
-}
-
-
-/* TOGGLE BUTTON */
-
-.calendar-wrapper.dark .theme-toggle-btn {
-  background: rgba(255,255,255,0.06);
-
-  backdrop-filter: blur(12px);
-
-  color: white;
-
-  border: 1px solid rgba(255,255,255,0.08);
-
-  box-shadow:
-    0 4px 12px rgba(0,0,0,0.25);
-}
-
-.calendar-wrapper.dark .theme-toggle-btn:hover {
-  background: rgba(255,255,255,0.12);
-
-  transform: translateY(-1px);
-}
-
-        /* =========================
-           COMMON STYLES
-        ========================= */
 
         .calendar-topbar {
           display: flex;
           justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
+          align-items: flex-start;
+          gap: 16px;
+          margin-bottom: 18px;
           flex-wrap: wrap;
-          gap: 14px;
+        }
+
+        .calendar-eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin: 0 0 6px;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #64748b;
+        }
+
+        .calendar-shell.dark .calendar-eyebrow {
+          color: #94a3b8;
         }
 
         .calendar-heading {
-          color: white;
-          font-size: 28px;
           margin: 0;
-          font-weight: 700;
+          font-size: 28px;
+          font-weight: 800;
+          letter-spacing: -0.03em;
         }
 
-        .calendar-wrapper.light .calendar-heading {
-          color: #111827;
+        .calendar-subtitle {
+          margin: 6px 0 0;
+          color: #64748b;
+          max-width: 560px;
         }
 
-        .theme-toggle-btn {
+        .calendar-shell.dark .calendar-subtitle {
+          color: #94a3b8;
+        }
+
+        .calendar-actions {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .calendar-action-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
           border: none;
-          padding: 12px 18px;
           border-radius: 14px;
-          font-size: 14px;
+          padding: 10px 14px;
           font-weight: 600;
           cursor: pointer;
-          transition: 0.2s ease;
-          background: white;
-          color: #111827;
-          box-shadow:
-            0 4px 12px rgba(0,0,0,0.12);
+          transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+          background: #2563eb;
+          color: white;
         }
 
-        .theme-toggle-btn:hover {
+        .calendar-action-btn.secondary {
+          background: rgba(148, 163, 184, 0.16);
+          color: inherit;
+        }
+
+        .calendar-shell.dark .calendar-action-btn.secondary {
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        .calendar-action-btn:hover {
           transform: translateY(-1px);
         }
 
-        .dark .theme-toggle-btn {
-          background: rgba(255,255,255,0.12);
-          color: white;
-          backdrop-filter: blur(10px);
+        .calendar-action-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+          transform: none;
         }
 
-        .fc {
-          padding: 20px;
-          border-radius: 24px;
-          box-shadow:
-            0 10px 40px rgba(0,0,0,0.15);
-          transition: 0.3s ease;
+        .spin {
+          animation: spin 0.9s linear infinite;
         }
 
-        .fc-toolbar {
-          margin-bottom: 20px !important;
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
-        .fc-toolbar-title {
-          font-size: 24px !important;
+        .calendar-metrics {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+
+        .calendar-metric-card {
+          border-radius: 18px;
+          padding: 14px 16px;
+          background: rgba(148, 163, 184, 0.08);
+        }
+
+        .calendar-shell.light .calendar-metric-card {
+          background: #eef2ff;
+        }
+
+        .calendar-metric-card span,
+        .calendar-detail-grid span,
+        .calendar-mini-label {
+          display: block;
+          font-size: 12px;
+          color: #64748b;
+          margin-bottom: 4px;
+        }
+
+        .calendar-shell.dark .calendar-metric-card span,
+        .calendar-shell.dark .calendar-detail-grid span,
+        .calendar-shell.dark .calendar-mini-label {
+          color: #94a3b8;
+        }
+
+        .calendar-metric-card strong {
+          font-size: 22px;
+          font-weight: 800;
+        }
+
+        .calendar-metric-card-wide {
+          grid-column: span 1;
+        }
+
+        .calendar-alert {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 14px;
+          border-radius: 14px;
+          margin-bottom: 16px;
+          background: rgba(239, 68, 68, 0.12);
+          color: #b91c1c;
+        }
+
+        .calendar-shell.dark .calendar-alert {
+          background: rgba(248, 113, 113, 0.16);
+          color: #fecaca;
+        }
+
+        .calendar-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+          gap: 16px;
+        }
+
+        .calendar-panel {
+          border-radius: 20px;
+          overflow: hidden;
+          min-width: 0;
+        }
+
+        .calendar-panel-main {
+          background: rgba(255, 255, 255, 0.6);
+        }
+
+        .calendar-shell.dark .calendar-panel-main {
+          background: rgba(15, 23, 42, 0.5);
+        }
+
+        .calendar-panel-inner {
+          position: relative;
+          padding: 12px;
+        }
+
+        .calendar-loading {
+          position: absolute;
+          inset: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 16px;
+          background: rgba(15, 23, 42, 0.08);
+          font-weight: 600;
+          backdrop-filter: blur(4px);
+        }
+
+        .calendar-shell.dark .calendar-loading {
+          background: rgba(15, 23, 42, 0.4);
+        }
+
+        .calendar-panel-side {
+          padding: 18px;
+          background: rgba(255, 255, 255, 0.66);
+          border: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .calendar-shell.dark .calendar-panel-side {
+          background: rgba(15, 23, 42, 0.72);
+          border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .calendar-side-title {
+          margin: 0 0 12px;
+          font-size: 18px;
           font-weight: 700;
         }
 
-        /* BUTTONS */
-
-        .fc-button {
-          border: none !important;
-          padding: 10px 16px !important;
-          border-radius: 12px !important;
-          transition: 0.2s ease;
-          margin-left: 8px !important;
-          margin-right: 8px !important;
-          font-weight: 600 !important;
+        .calendar-detail-card {
+          display: grid;
+          gap: 14px;
         }
 
-        .dark .fc-button {
-          background: #286cda !important;
-          color: white !important;
+        .calendar-detail-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
         }
 
-        .dark .fc-button:hover {
-          background: #1464d3 !important;
+        .calendar-detail-header h3 {
+          margin: 0;
+          font-size: 18px;
+          font-weight: 800;
         }
 
-        .light .fc-button {
-          background: #e5e7eb !important;
-          color: #111827 !important;
+        .status-pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 5px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: capitalize;
+          background: rgba(148, 163, 184, 0.16);
         }
 
-        .light .fc-button:hover {
-          background: #ffffff !important;
+        .status-pill.confirmed {
+          background: rgba(34, 197, 94, 0.16);
+          color: #15803d;
         }
 
-        .fc-button-active {
-          background: #2563eb !important;
-          color: white !important;
+        .status-pill.draft {
+          background: rgba(245, 158, 11, 0.16);
+          color: #b45309;
         }
 
-        /* GRID */
-
-        .fc-theme-standard td,
-        .fc-theme-standard th,
-        .fc-theme-standard .fc-scrollgrid {
-          border-color: rgba(255,255,255,0.08);
+        .status-pill.cancelled {
+          background: rgba(239, 68, 68, 0.16);
+          color: #b91c1c;
         }
 
-        .light .fc-theme-standard td,
-        .light .fc-theme-standard th,
-        .light .fc-theme-standard .fc-scrollgrid {
-          border-color: #e5e7eb;
+        .calendar-shell.dark .status-pill.confirmed {
+          color: #86efac;
         }
 
-        .fc-col-header-cell {
-          padding: 14px 0;
+        .calendar-shell.dark .status-pill.draft {
+          color: #fcd34d;
         }
 
-        .fc-col-header-cell-cushion {
-          text-decoration: none;
+        .calendar-shell.dark .status-pill.cancelled {
+          color: #fca5a5;
+        }
+
+        .calendar-detail-description {
+          margin: 0;
+          color: #475569;
+          line-height: 1.6;
+        }
+
+        .calendar-shell.dark .calendar-detail-description {
+          color: #cbd5e1;
+        }
+
+        .calendar-detail-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: inherit;
+        }
+
+        .calendar-detail-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .calendar-detail-grid > div {
+          border-radius: 14px;
+          padding: 12px;
+          background: rgba(148, 163, 184, 0.08);
+        }
+
+        .calendar-shell.dark .calendar-detail-grid > div {
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        .calendar-detail-grid strong {
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .calendar-reminders ul {
+          margin: 8px 0 0;
+          padding-left: 18px;
+          color: inherit;
+        }
+
+        .calendar-empty-state {
+          min-height: 320px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          color: #64748b;
+          text-align: center;
+        }
+
+        .calendar-shell.dark .calendar-empty-state {
+          color: #94a3b8;
+        }
+
+        .calendar-empty-state p,
+        .calendar-empty-state span {
+          margin: 0;
+        }
+
+        .calendar-shell .fc {
+          border: none;
+          background: transparent;
+        }
+
+        .calendar-shell .fc .fc-toolbar-title {
+          font-size: 22px;
+          font-weight: 800;
+        }
+
+        .calendar-shell .fc .fc-button {
+          border: none;
+          border-radius: 12px;
+          padding: 8px 12px;
+          box-shadow: none;
           font-weight: 600;
         }
 
-        .fc-daygrid-day {
-          transition: 0.2s ease;
+        .calendar-shell.light .fc .fc-button {
+          background: #e2e8f0;
+          color: #0f172a;
         }
 
-        .fc-daygrid-day-number {
-          text-decoration: none;
-          padding: 10px;
-          font-size: 14px;
+        .calendar-shell.dark .fc .fc-button {
+          background: rgba(255, 255, 255, 0.08);
+          color: #e2e8f0;
         }
 
-        .fc-day-today {
-          background: rgba(37, 99, 235, 0.14) !important;
+        .calendar-shell.light .fc .fc-button:hover,
+        .calendar-shell.light .fc .fc-button-active,
+        .calendar-shell.dark .fc .fc-button:hover,
+        .calendar-shell.dark .fc .fc-button-active {
+          background: #2563eb;
+          color: #fff;
         }
 
-        /* EVENTS */
-
-        .fc-event {
-          border: none !important;
-          border-radius: 10px !important;
-          padding: 4px 8px;
-          font-size: 13px;
-          font-weight: 500;
-          background: linear-gradient(
-            135deg,
-            #2563eb,
-            #7c3aed
-          ) !important;
-          box-shadow:
-            0 4px 12px rgba(37,99,235,0.25);
+        .calendar-shell.dark .fc .fc-daygrid-day-number,
+        .calendar-shell.dark .fc .fc-col-header-cell-cushion,
+        .calendar-shell.dark .fc .fc-toolbar-title {
+          color: #e2e8f0;
         }
 
-        .fc-event:hover {
-          transform: translateY(-1px);
-          cursor: pointer;
+        .calendar-shell.dark .fc .fc-theme-standard td,
+        .calendar-shell.dark .fc .fc-theme-standard th,
+        .calendar-shell.dark .fc .fc-scrollgrid {
+          border-color: rgba(255, 255, 255, 0.08);
         }
 
-        /* LIST VIEW */
-
-        .fc-list {
-          border-radius: 16px;
-          overflow: hidden;
+        .calendar-shell.dark .fc .fc-day-today {
+          background: rgba(37, 99, 235, 0.16) !important;
         }
 
-        .fc-list-event:hover td {
-          background: rgba(0,0,0,0.04) !important;
+        @media (max-width: 1024px) {
+          .calendar-layout {
+            grid-template-columns: 1fr;
+          }
         }
-
-        /* GRID ROUND */
-
-        .fc-scrollgrid {
-          border-radius: 18px;
-          overflow: hidden;
-        }
-
-        /* RESPONSIVE */
 
         @media (max-width: 768px) {
-
-          .calendar-wrapper {
-            padding: 12px;
+          .calendar-shell {
+            padding: 16px;
           }
 
-          .calendar-topbar {
-            flex-direction: column;
-            align-items: flex-start;
+          .calendar-metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
-          .fc-toolbar {
+          .calendar-detail-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .calendar-heading {
+            font-size: 22px;
+          }
+
+          .calendar-shell .fc .fc-toolbar {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-          }
-
-          .fc-toolbar-title {
-            font-size: 18px !important;
-          }
-
-          .fc-button {
-            padding: 6px 10px !important;
-            font-size: 12px !important;
-            margin: 4px !important;
+            gap: 10px;
           }
         }
-
       `}</style>
-    </div>
+    </section>
   );
 }
