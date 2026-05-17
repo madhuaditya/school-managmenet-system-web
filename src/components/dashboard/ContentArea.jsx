@@ -48,6 +48,7 @@ import ApplyLeave from '../dashboard-menus/leave/ApplyLeave';
 import MyLeaves from '../dashboard-menus/leave/MyLeaves';
 import LeaveAdminReview from '../dashboard-menus/leave/LeaveAdminReview';
 import BroadcastCenter from '../dashboard-menus/broadcast/BroadcastCenter';
+import CalendarManagement from '../dashboard-menus/calendar/CalendarManagement';
 
 const componentMap = {
   AdminHome,
@@ -90,6 +91,7 @@ const componentMap = {
   MyLeaves,
   LeaveAdminReview,
   BroadcastCenter,
+  CalendarManagement,
 };
 
 const ContentArea = ({
@@ -148,6 +150,7 @@ const ContentArea = ({
     'salary-records': 'SalaryRecordsManager',
     'salary-payments': 'SalaryPaymentsManager',
     'my-salary': 'MySalary',
+    calendar: 'CalendarManagement',
     'create-alert': 'CreateAlert',
     'my-alerts': 'MyAlerts',
     broadcast: 'BroadcastCenter',

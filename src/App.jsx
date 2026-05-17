@@ -53,6 +53,7 @@ function App() {
             { path: 'salary-history/:staffId', element: <SalaryPaymentHistoryPage /> },
             { path: 'fee-history/:studentId', element: <FeePaymentHistoryPage /> },
             { path: 'my-salary', element: <DashboardContentRoute /> },
+            { path: 'calendar', element: <DashboardContentRoute /> },
             { path: 'fee-matrix', element: <DashboardContentRoute /> },
             { path: 'salary-matrix', element: <DashboardContentRoute /> },
             { path: 'broadcast', element: <DashboardContentRoute /> },
