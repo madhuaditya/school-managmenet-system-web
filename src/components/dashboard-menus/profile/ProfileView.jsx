@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '../../../stores/authStore';
 import dashboardService from '../../../services/dashboard-services/dashboardService';
+import AddressLookupField from '../../forms/AddressLookupField';
 
 const ProfileView = () => {
   const profile = useAuthStore((state) => state.profile);
@@ -12,6 +13,7 @@ const ProfileView = () => {
     address: profile?.address || '',
     city: profile?.city || '',
     state: profile?.state || '',
+    country: profile?.country || '',
     pinCode: profile?.pinCode || '',
   });
 
@@ -41,6 +43,7 @@ const ProfileView = () => {
         address: data.address || '',
         city: data.city || '',
         state: data.state || '',
+        country: data.country || '',
         pinCode: data.pinCode || '',
       });
 
@@ -56,6 +59,7 @@ const ProfileView = () => {
               address: data.address || prev.profile.address,
               city: data.city || prev.profile.city,
               state: data.state || prev.profile.state,
+              country: data.country || prev.profile.country,
               pinCode: data.pinCode || prev.profile.pinCode,
             }
           : prev.profile,
@@ -80,6 +84,7 @@ const ProfileView = () => {
     const trimmedAddress = formData.address.trim();
     const trimmedCity = formData.city.trim();
     const trimmedState = formData.state.trim();
+    const trimmedCountry = formData.country.trim();
     const trimmedPinCode = formData.pinCode.trim();
 
     if (trimmedName.length < 3) {
@@ -115,6 +120,7 @@ const ProfileView = () => {
         address: trimmedAddress,
         city: trimmedCity,
         state: trimmedState,
+        country: trimmedCountry,
         pinCode: trimmedPinCode,
       });
 
@@ -131,6 +137,7 @@ const ProfileView = () => {
           address: updated.address || '',
           city: updated.city || '',
           state: updated.state || '',
+          country: updated.country || '',
           pinCode: updated.pinCode || '',
         });
       }
@@ -147,6 +154,7 @@ const ProfileView = () => {
               address: updated?.address || trimmedAddress,
               city: updated?.city || trimmedCity,
               state: updated?.state || trimmedState,
+              country: updated?.country || trimmedCountry,
               pinCode: updated?.pinCode || trimmedPinCode,
             }
           : prev.profile,
@@ -214,50 +222,19 @@ const ProfileView = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-600 font-semibold mb-2">Address</label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => updateField('address', e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter address"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-600 font-semibold mb-2">City</label>
-              <input
-                type="text"
-                value={formData.city}
-                onChange={(e) => updateField('city', e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter city"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-600 font-semibold mb-2">State</label>
-              <input
-                type="text"
-                value={formData.state}
-                onChange={(e) => updateField('state', e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter state"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-600 font-semibold mb-2">Pin Code</label>
-            <input
-              type="text"
-              value={formData.pinCode}
-              onChange={(e) => updateField('pinCode', e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter pin code"
-            />
-          </div>
+          <AddressLookupField
+            fields={{ address: true, pincode: true, city: true, state: true, country: true }}
+            address={formData.address}
+            setAddress={(value) => updateField('address', value)}
+            pincode={formData.pinCode}
+            setPincode={(value) => updateField('pinCode', value)}
+            city={formData.city}
+            setCity={(value) => updateField('city', value)}
+            state={formData.state}
+            setState={(value) => updateField('state', value)}
+            country={formData.country}
+            setCountry={(value) => updateField('country', value)}
+          />
 
           <div className="pt-2 space-y-3">
             <div>

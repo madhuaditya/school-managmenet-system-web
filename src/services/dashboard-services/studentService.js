@@ -1,9 +1,12 @@
 import apiClient from '../apiClient';
+import { useAuthStore } from '../../stores/authStore';
+
+const isSchoolAccount = () => useAuthStore.getState().authType === 'school';
 
 export const studentService = {
   // Get all students
   getStudents: async () => {
-    const response = await apiClient.get('/api/student');
+    const response = await apiClient.get(isSchoolAccount() ? '/api/school-management/students' : '/api/student');
     return response.data;
   },
 
@@ -15,7 +18,7 @@ export const studentService = {
 
   // Get single student
   getStudent: async (id) => {
-    const response = await apiClient.get(`/api/student/${id}`);
+    const response = await apiClient.get(isSchoolAccount() ? `/api/school-management/students/${id}` : `/api/student/${id}`);
     return response.data;
   },
 
@@ -27,7 +30,7 @@ export const studentService = {
 
   // Update student
   updateStudent: async (id, data) => {
-    const response = await apiClient.put(`/api/student/update/${id}`, data);
+    const response = await apiClient.put(isSchoolAccount() ? `/api/school-management/students/${id}` : `/api/student/update/${id}`, data);
     return response.data;
   },
 

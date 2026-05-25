@@ -1,0 +1,27 @@
+Web application what are pending 
+school interface 
+   - total school admin teacher staff and student class wise and add admin dashboard 
+   - delete user from the admin soft delete / hard delete 
+   - subscription management 
+   - change role for admin 
+
+
+App what are pending yet
+  - parent interface 
+	-  create login with parent number and OTP and 
+        - list all student as menu for those parent 
+        - each student have only three feature for now attendance mark and alters and complete details all are only view only
+        - logout 
+	- no profile option just pure new interface experience 
+
+  - no school interface 
+  - no school login in not school registration here 
+  - user and parent login only 
+  - class dashboard 
+  - student performance have some functionality issue need to update here and remove download pdf mark upload from perforce page only view only with filters
+  - improve subject tabs have enough functionaly just need to udate those
+  - in fee payment we only have fee payment history with category wise pending partial and paid after selecting class and month and year have few fee matrix in card ways  
+  - same for salary payments view only option with few salary matrix in card ways 
+  - hide chat feature for now 
+  - create one more tab for broad cast messages one
+  - calendar will come in next version 

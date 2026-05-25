@@ -3,6 +3,7 @@ import { Eye, EyeOff, UserPlus } from 'react-feather';
 import useRole from '../../../hooks/useRole';
 import { useAuthStore } from '../../../stores/authStore';
 import userService from '../../../services/dashboard-services/userService';
+import AddressLookupField from '../../forms/AddressLookupField';
 
 const USER_TYPES = ['admin', 'teacher', 'student', 'staff'];
 
@@ -16,6 +17,7 @@ const initialFormData = {
   address: '',
   city: '',
   state: '',
+  country: '',
   pinCode: '',
   gender: '',
   classId: '',
@@ -53,10 +55,11 @@ const generateAutoPassword = (length = 10) => {
 };
 
 const AddUser = () => {
-  const { isAdmin } = useRole();
+  const { isAdmin, isSchoolAccount } = useRole();
   const profile = useAuthStore((state) => state.profile);
+  const allowedUserTypes = isSchoolAccount ? ['admin'] : USER_TYPES;
 
-  const [userType, setUserType] = useState('student');
+  const [userType, setUserType] = useState(isSchoolAccount ? 'admin' : 'student');
   const [formData, setFormData] = useState({
     ...initialFormData,
     school: getSchoolId(profile?.school),
@@ -72,6 +75,12 @@ const AddUser = () => {
   const [statusMessage, setStatusMessage] = useState(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [registrationSlip, setRegistrationSlip] = useState(null);
+
+  useEffect(() => {
+    if (isSchoolAccount && userType !== 'admin') {
+      setUserType('admin');
+    }
+  }, [isSchoolAccount, userType]);
 
   useEffect(() => {
     setFormData((prev) => ({ ...prev, school: getSchoolId(profile?.school) }));
@@ -113,34 +122,6 @@ const AddUser = () => {
     assignStudentId();
   }, [userType]);
 
-  useEffect(() => {
-    if (!formData.name.trim()) {
-      setFormData((prev) => ({ ...prev, username: '' }));
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        setGeneratingUsername(true);
-        const result = await userService.generateUsername({
-          name: formData.name,
-          role: userType,
-        });
-        const nextUsername = result?.data?.username || result?.username || '';
-        if (nextUsername) {
-          setFormData((prev) => ({ ...prev, username: nextUsername }));
-        }
-      } catch (error) {
-        const message = error?.response?.data?.msg || 'Failed to auto-generate username';
-        setStatusMessage({ type: 'error', text: message });
-      } finally {
-        setGeneratingUsername(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [formData.name, userType]);
-
   const classOptions = useMemo(() => {
     if (!Array.isArray(classes)) return [];
     return classes.map((item) => ({
@@ -178,6 +159,38 @@ const AddUser = () => {
       setLoadingClasses(false);
     }
   };
+
+  function handleGenerateUsername() {
+    const trimmedName = formData.name.trim();
+
+    if (trimmedName.length < 3) {
+      setErrors((prev) => ({ ...prev, name: 'Name must be at least 3 characters to generate a username' }));
+      setStatusMessage({ type: 'error', text: 'Enter at least 3 characters before generating a username.' });
+      return Promise.resolve(false);
+    }
+
+    return (async () => {
+      try {
+        setGeneratingUsername(true);
+        const result = await userService.generateUsername({
+          name: trimmedName,
+          role: userType,
+        });
+        const nextUsername = result?.data?.username || result?.username || '';
+        if (nextUsername) {
+          setFormData((prev) => ({ ...prev, username: nextUsername }));
+          setStatusMessage(null);
+        }
+        return true;
+      } catch (error) {
+        const message = error?.response?.data?.msg || 'Failed to auto-generate username';
+        setStatusMessage({ type: 'error', text: message });
+        return false;
+      } finally {
+        setGeneratingUsername(false);
+      }
+    })();
+  }
 
   const updateFormField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -317,6 +330,9 @@ const AddUser = () => {
         state: formData.state,
         address: formData.address,
         pinCode: formData.pinCode,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
         gender: formData.gender,
         school: formData.school,
       };
@@ -361,6 +377,7 @@ const AddUser = () => {
         address: formData.address || '-',
         city: formData.city || '-',
         state: formData.state || '-',
+        country: formData.country || '-',
         pinCode: formData.pinCode || '-',
         schoolId: formData.school || '-',
         schoolBrand,
@@ -549,7 +566,7 @@ const AddUser = () => {
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-2 md:grid-cols-4">
-        {USER_TYPES.map((type) => (
+        {allowedUserTypes.map((type) => (
           <button
             key={type}
             type="button"
@@ -587,6 +604,16 @@ const AddUser = () => {
             placeholder: generatingUsername ? 'Generating username...' : 'Auto-generated username',
             required: true,
             readOnly: true,
+            rightElement: (
+              <button
+                type="button"
+                onClick={handleGenerateUsername}
+                disabled={submitting || generatingUsername || formData.name.trim().length < 3}
+                className="rounded-md bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+              >
+                {generatingUsername ? '...' : 'Generate'}
+              </button>
+            ),
           })}
           {renderInput({
             label: 'Email',
@@ -646,11 +673,21 @@ const AddUser = () => {
 
         <section>
           <h2 className="mb-4 text-lg font-semibold text-gray-900">Address Information</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {renderInput({ label: 'Address', field: 'address', placeholder: 'Enter address' })}
-            {renderInput({ label: 'City', field: 'city', placeholder: 'Enter city' })}
-            {renderInput({ label: 'State', field: 'state', placeholder: 'Enter state' })}
-            {renderInput({ label: 'Pin Code', field: 'pinCode', placeholder: 'Enter 6-digit pin code' })}
+          <AddressLookupField
+            fields={{ address: true, pincode: true, city: true, state: true, country: true }}
+            address={formData.address}
+            setAddress={(value) => updateFormField('address', value)}
+            pincode={formData.pinCode}
+            setPincode={(value) => updateFormField('pinCode', value)}
+            city={formData.city}
+            setCity={(value) => updateFormField('city', value)}
+            state={formData.state}
+            setState={(value) => updateFormField('state', value)}
+            country={formData.country}
+            setCountry={(value) => updateFormField('country', value)}
+            disabled={submitting}
+          />
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
                 Gender *
@@ -812,6 +849,7 @@ const AddUser = () => {
                   <tr className="border-b border-gray-200"><td className="bg-gray-50 px-3 py-2 font-semibold">Address</td><td className="px-3 py-2">{registrationSlip.address}</td></tr>
                   <tr className="border-b border-gray-200"><td className="bg-gray-50 px-3 py-2 font-semibold">City</td><td className="px-3 py-2">{registrationSlip.city}</td></tr>
                   <tr className="border-b border-gray-200"><td className="bg-gray-50 px-3 py-2 font-semibold">State</td><td className="px-3 py-2">{registrationSlip.state}</td></tr>
+                  <tr className="border-b border-gray-200"><td className="bg-gray-50 px-3 py-2 font-semibold">Country</td><td className="px-3 py-2">{registrationSlip.country}</td></tr>
                   <tr className="border-b border-gray-200"><td className="bg-gray-50 px-3 py-2 font-semibold">Pin Code</td><td className="px-3 py-2">{registrationSlip.pinCode}</td></tr>
                   <tr className="border-b border-gray-200"><td className="bg-gray-50 px-3 py-2 font-semibold">School</td><td className="px-3 py-2">{registrationSlip.schoolId}</td></tr>
 

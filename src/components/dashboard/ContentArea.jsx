@@ -22,6 +22,11 @@ import ClassesList from '../dashboard-menus/classes/ClassesList';
 import ClassInfoView from '../dashboard-menus/classes/ClassInfoView';
 import SubjectsList from '../dashboard-menus/subjects/SubjectsList';
 
+import StudentsListSchool from '../dashboard-menus/school-login/StudentsListSchool';
+import TeachersListSchool from '../dashboard-menus/school-login/TeachersListSchool';
+import AdminListSchool from '../dashboard-menus/school-login/AdminListSchool';
+import StaffListSchool from '../dashboard-menus/school-login/StaffListSchool';
+
 // Feature Components
 import AttendanceMarkForm from '../dashboard-menus/attendance/AttendanceMarkForm';
 import MyAttendance from '../dashboard-menus/attendance/MyAttendance';
@@ -42,6 +47,7 @@ import MySalary from '../dashboard-menus/salary/MySalary';
 import CreateAlert from '../dashboard-menus/alerts/CreateAlert';
 import MyAlerts from '../dashboard-menus/alerts/MyAlerts';
 import ProfileView from '../dashboard-menus/profile/ProfileView';
+import SchoolProfileView from '../dashboard-menus/profile/SchoolProfileView';
 import AddUser from '../dashboard-menus/users/AddUser';
 import IDCardGenerator from '../dashboard-menus/id-cards/IDCardGenerator';
 import ApplyLeave from '../dashboard-menus/leave/ApplyLeave';
@@ -49,6 +55,9 @@ import MyLeaves from '../dashboard-menus/leave/MyLeaves';
 import LeaveAdminReview from '../dashboard-menus/leave/LeaveAdminReview';
 import BroadcastCenter from '../dashboard-menus/broadcast/BroadcastCenter';
 import CalendarManagement from '../dashboard-menus/calendar/CalendarManagement';
+import SchoolHome from '../dashboard-menus/school/SchoolHome';
+import SchoolSubscriptionManager from '../dashboard-menus/school/SchoolSubscriptionManager';
+import SchoolAcademicsManager from '../dashboard-menus/school/SchoolAcademicsManager';
 
 const componentMap = {
   AdminHome,
@@ -56,6 +65,10 @@ const componentMap = {
   StudentHome,
   StaffHome,
   StudentsListNew,
+  studentsSchool: StudentsListSchool,
+  teachersSchool: TeachersListSchool,
+  adminSchool: AdminListSchool,
+  staffSchool: StaffListSchool,
   TeachersListNew,
   StaffListNew,
   StudentsList,
@@ -84,6 +97,7 @@ const componentMap = {
   CreateAlert,
   MyAlerts,
   ProfileView,
+  SchoolProfileView,
   AddUser,
   AdminList,
   IDCardGenerator,
@@ -92,6 +106,9 @@ const componentMap = {
   LeaveAdminReview,
   BroadcastCenter,
   CalendarManagement,
+  SchoolHome,
+  SchoolSubscriptionManager,
+  SchoolAcademicsManager,
 };
 
 const ContentArea = ({
@@ -131,16 +148,21 @@ const ContentArea = ({
 
   // Map menu IDs to component names
   const componentNameMap = {
-    dashboard: 'AdminHome', // Will be overridden by role
+    dashboard: 'AdminHome', // Will be overridden by role/auth type
     students: 'StudentsListNew',
     teachers: 'TeachersListNew',
     'admin': 'AdminListNew',
     staff: 'StaffListNew',
     adduser: 'AddUser',
+    studentsSchool: 'studentsSchool',
+    teachersSchool: 'teachersSchool',
+    adminSchool: 'adminSchool',
+    staffSchool: 'staffSchool',
     classes: 'ClassesList',
     class: 'ClassInfoView',
     'id-cards': 'IDCardGenerator',
     subjects: 'SubjectsList',
+    exams: 'ExamManagement',
     'fee-structure': 'FeeStructureList',
     'fee-matrix': 'FeeMatrix',
     'fee-records': 'FeeRecordsManager',
@@ -163,9 +185,11 @@ const ContentArea = ({
     profile: 'ProfileView',
     class_detail: 'ClassesList',
     'my-attendance': 'MyAttendance',
+    subscription: 'SchoolSubscriptionManager',
+    'academics-manager': 'SchoolAcademicsManager',
   };
 
-  const { role } = useRole();
+  const { role, isSchoolAccount } = useRole();
 
   // Override dashboard component based on role
   let componentName = componentNameMap[activeMenu];
@@ -182,7 +206,15 @@ const ContentArea = ({
   }
 
   if (activeMenu === 'dashboard') {
-    componentName = `${role.charAt(0).toUpperCase() + role.slice(1)}Home`;
+    if (isSchoolAccount) {
+      componentName = 'SchoolHome';
+    } else {
+      componentName = `${role.charAt(0).toUpperCase() + role.slice(1)}Home`;
+    }
+  }
+
+  if (activeMenu === 'profile' && isSchoolAccount) {
+    componentName = 'SchoolProfileView';
   }
 
   const Component = componentMap[componentName];

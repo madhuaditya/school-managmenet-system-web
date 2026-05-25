@@ -1,9 +1,12 @@
 import apiClient from '../apiClient';
+import { useAuthStore } from '../../stores/authStore';
+
+const isSchoolAccount = () => useAuthStore.getState().authType === 'school';
 
 export const classService = {
   // Get all classes
   getClasses: async () => {
-    const response = await apiClient.get('/api/class/all');
+    const response = await apiClient.get(isSchoolAccount() ? '/api/school-management/classes' : '/api/class/all');
     return response.data;
   },
 
@@ -26,13 +29,13 @@ export const classService = {
 
   // Update class
   updateClass: async (id, data) => {
-    const response = await apiClient.put(`/api/class/${id}`, data);
+    const response = await apiClient.put(isSchoolAccount() ? `/api/school-management/classes/${id}` : `/api/class/${id}`, data);
     return response.data;
   },
 
   // Delete class
   deleteClass: async (id) => {
-    const response = await apiClient.delete(`/api/class/${id}`);
+    const response = await apiClient.delete(isSchoolAccount() ? `/api/school-management/classes/${id}` : `/api/class/${id}`);
     return response.data;
   },
 

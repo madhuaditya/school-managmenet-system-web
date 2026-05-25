@@ -24,6 +24,9 @@ function Login() {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const inputsRef = useRef([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [resendCount, setResendCount] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
     if (openOtp) {
@@ -31,6 +34,21 @@ function Login() {
       setTimeout(() => inputsRef.current[0]?.focus(), 30);
     }
   }, [openOtp]);
+
+  // cooldown timer for resend OTP
+  useEffect(() => {
+    if (!cooldown) return undefined;
+    const id = setInterval(() => {
+      setCooldown((c) => {
+        if (c <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
 
   if (isAuthenticated) {
     return <Navigate to={ROUTES.dashboard} replace />;
@@ -79,8 +97,30 @@ function Login() {
       setOtpMessage(result?.msg || 'OTP sent to your registered phone number');
       setToken(result.data.token);
       setOpenOtp(true);
+      // initialize resend tracking
+      setResendCount(1);
+      setCooldown(90);
     } catch (error) {
       setErrorText(error?.response?.data?.msg || error?.message || 'Failed to login. Please try again.');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const onResendOtp = async () => {
+    if (resendCount >= 5) return;
+    if (cooldown > 0) return;
+    setErrorText('');
+    try {
+      setSendingOtp(true);
+      const result = await sendOTPApi({ username: username.trim(), password });
+      if (!result?.success) throw new Error(result?.msg || 'Failed to resend OTP');
+      setOtpMessage(result?.msg || 'OTP resent to your registered phone number');
+      setToken(result.data.token);
+      setResendCount((c) => c + 1);
+      setCooldown(90);
+    } catch (err) {
+      setErrorText(err?.response?.data?.msg || err?.message || 'Failed to resend OTP.');
     } finally {
       setSendingOtp(false);
     }
@@ -142,13 +182,22 @@ function Login() {
 
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-slate-700">Password</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
-              placeholder="Password"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 pr-20 text-sm outline-none focus:border-cyan-500"
+                placeholder="Password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-2 top-2 rounded-md px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </label>
 
           <button
@@ -294,6 +343,16 @@ function Login() {
           <div>
             <p className="text-sm text-slate-600">Didn't receive the OTP? Try logging in again.</p>
             {errorText && <p className="mt-2 text-sm font-medium text-red-600">{errorText}</p>}
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={onResendOtp}
+                disabled={sendingOtp || cooldown > 0 || resendCount >= 5}
+                className="rounded-xl bg-cyan-600 px-3 py-1 text-sm font-semibold text-white hover:bg-cyan-500 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {resendCount >= 5 ? 'Resend limit reached' : cooldown > 0 ? `Resend in ${cooldown}s` : `Resend OTP (${resendCount}/5)`}
+              </button>
+            </div>
           </div>
         </form>
             }

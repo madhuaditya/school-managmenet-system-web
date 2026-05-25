@@ -1,15 +1,18 @@
 import apiClient from '../apiClient';
+import { useAuthStore } from '../../stores/authStore';
+
+const isSchoolAccount = () => useAuthStore.getState().authType === 'school';
 
 export const staffService = {
   // Get all staff
   getStaff: async () => {
-    const response = await apiClient.get('/api/auth/staff/all');
+    const response = await apiClient.get(isSchoolAccount() ? '/api/school-management/staff' : '/api/auth/staff/all');
     return response.data;
   },
 
   // Get single staff
   getStaffMember: async (id) => {
-    const response = await apiClient.get(`/api/staff/${id}`);
+    const response = await apiClient.get(isSchoolAccount() ? `/api/school-management/staff/${id}` : `/api/staff/${id}`);
     return response.data;
   },
 
@@ -21,13 +24,13 @@ export const staffService = {
 
   // Update staff
   updateStaff: async (id, data) => {
-    const response = await apiClient.put(`/api/staff/${id}`, data);
+    const response = await apiClient.put(isSchoolAccount() ? `/api/school-management/staff/${id}` : `/api/staff/${id}`, data);
     return response.data;
   },
 
   // Delete staff
   deleteStaff: async (id) => {
-    const response = await apiClient.delete(`/api/staff/${id}`);
+    const response = await apiClient.delete(isSchoolAccount() ? `/api/school-management/staff/${id}` : `/api/staff/${id}`);
     return response.data;
   },
 

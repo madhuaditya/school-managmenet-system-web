@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { TableSkeleton } from '../_shared/Skeleton';
 import classService from '../../../services/dashboard-services/classService';
 import teacherService from '../../../services/dashboard-services/teacherService';
-import apiClient from '../../../services/apiClient';
+import subjectService from '../../../services/dashboard-services/subjectService';
 import ClassAttendanceDashboard from './ClassAttendanceDashboard';
 import { getDashboardMenuTargetRoute } from '../../../constants/routes';
 
@@ -48,7 +48,7 @@ const ClassesList = ({ setActiveMenu, setTargetId, targetId }) => {
       const [classResult, teacherResult, subjectResult] = await Promise.all([
         classService.getClasses(),
         teacherService.getTeachers(),
-        apiClient.get('/api/subject/all').then((response) => response.data),
+        subjectService.getSubjects(),
       ]);
 
       if (!classResult?.success) {

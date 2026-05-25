@@ -13,6 +13,7 @@ function SchoolLogin() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [sendingForgot, setSendingForgot] = useState(false);
   const [errorText, setErrorText] = useState('');
@@ -86,13 +87,22 @@ function SchoolLogin() {
 
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-slate-700">Password</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
-              placeholder="Password"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 pr-20 text-sm outline-none focus:border-cyan-500"
+                placeholder="Password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-2 top-2 rounded-md px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </label>
 
           <button
