@@ -1,9 +1,12 @@
 import apiClient from '../apiClient';
+import { useAuthStore } from '../../stores/authStore';
+
+const isSchoolAccount = () => useAuthStore.getState().authType === 'school';
 
 export const subjectService = {
   // Get subject dashboard summary
   getSubjectDashboard: async () => {
-    const response = await apiClient.get('/api/subject/dashboard');
+    const response = await apiClient.get(isSchoolAccount() ? '/api/school-management/subjects' : '/api/subject/dashboard');
     return response.data;
   },
 
@@ -15,7 +18,7 @@ export const subjectService = {
 
   // Get all subjects
   getSubjects: async () => {
-    const response = await apiClient.get('/api/subject/all');
+    const response = await apiClient.get(isSchoolAccount() ? '/api/school-management/subjects' : '/api/subject/all');
     return response.data;
   },
 
@@ -34,13 +37,13 @@ export const subjectService = {
 
   // Update subject
   updateSubject: async (id, data) => {
-    const response = await apiClient.put(`/api/subject/${id}`, data);
+    const response = await apiClient.put(isSchoolAccount() ? `/api/school-management/subjects/${id}` : `/api/subject/${id}`, data);
     return response.data;
   },
 
   // Delete subject
   deleteSubject: async (id) => {
-    const response = await apiClient.delete(`/api/subject/${id}`);
+    const response = await apiClient.delete(isSchoolAccount() ? `/api/school-management/subjects/${id}` : `/api/subject/${id}`);
     return response.data;
   },
 

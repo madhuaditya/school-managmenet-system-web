@@ -1,15 +1,18 @@
 import apiClient from '../apiClient';
+import { useAuthStore } from '../../stores/authStore';
+
+const isSchoolAccount = () => useAuthStore.getState().authType === 'school';
 
 export const teacherService = {
   // Get all teachers
   getTeachers: async () => {
-    const response = await apiClient.get('/api/teacher/all');
+    const response = await apiClient.get(isSchoolAccount() ? '/api/school-management/teachers' : '/api/teacher/all');
     return response.data;
   },
 
   // Get single teacher
   getTeacher: async (id) => {
-    const response = await apiClient.get(`/api/teacher/${id}`);
+    const response = await apiClient.get(isSchoolAccount() ? `/api/school-management/teachers/${id}` : `/api/teacher/${id}`);
     return response.data;
   },
 
@@ -21,13 +24,13 @@ export const teacherService = {
 
   // Update teacher
   updateTeacher: async (id, data) => {
-    const response = await apiClient.put(`/api/teacher/${id}`, data);
+    const response = await apiClient.put(isSchoolAccount() ? `/api/school-management/teachers/${id}` : `/api/teacher/${id}`, data);
     return response.data;
   },
 
   // Delete teacher
   deleteTeacher: async (id) => {
-    const response = await apiClient.delete(`/api/teacher/${id}`);
+    const response = await apiClient.delete(isSchoolAccount() ? `/api/school-management/teachers/${id}` : `/api/teacher/${id}`);
     return response.data;
   },
 

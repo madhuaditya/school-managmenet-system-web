@@ -9,12 +9,13 @@ import { ROUTES } from '../../constants/routes';
 
 const Sidebar = ({ activeMenu, setActiveMenu }) => {
   const navigate = useNavigate();
-  const { role } = useRole();
+  const { role, authType, isSchoolAccount } = useRole();
   const profile = useAuthStore((state) => state.profile);
   const logout = useAuthStore((state) => state.logout);
   const profileRef = useRef(null);
   const [profileOpen, setProfileOpen] = useState(false);
-  const menuItems = MENU_ITEMS[role] || MENU_ITEMS.student;
+  const [expanded, setExpanded] = useState({});
+  const menuItems = MENU_ITEMS[isSchoolAccount ? 'school' : role] || MENU_ITEMS.student;
   const userInitial = (profile?.name || profile?.email || 'U').charAt(0).toUpperCase();
   const quickActions = useMemo(() => {
     if (role === 'student') {
@@ -31,11 +32,17 @@ const Sidebar = ({ activeMenu, setActiveMenu }) => {
       ];
     }
 
+    if (isSchoolAccount) {
+      return [
+        { id: 'dashboard', label: 'School Overview' },
+      ];
+    }
+
     return [
       { id: 'attendance', label: 'Attendance' },
       { id: 'create-alert', label: 'Create Alert' },
     ];
-  }, [role]);
+  }, [isSchoolAccount, role]);
 
   const handleMenuClick = (menuItem) => {
     if (menuItem.id === 'logout') {
@@ -180,22 +187,58 @@ const Sidebar = ({ activeMenu, setActiveMenu }) => {
 
       {/* Menu Items */}
       <nav className="flex-1 min-h-0 space-y-1 overflow-y-auto overflow-x-hidden px-1 pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {menuItems.map((item) => (
-          <motion.button
-            key={item.id}
-            whileHover={{ scale: 1.02, x: 4 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleMenuClick(item)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all ${
-              activeMenu === item.id
-                ? 'bg-[#2a2a2a] text-white shadow-md'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
-            } ${item.id === 'logout' ? 'mt-auto text-rose-200 hover:bg-rose-500/15 hover:text-white' : ''}`}
-          >
-            <item.icon size={20} />
-            <span className="font-medium text-sm">{item.label}</span>
-          </motion.button>
-        ))}
+        {menuItems.map((item) => {
+          const hasChildren = Array.isArray(item.children) && item.children.length > 0;
+          return (
+            <div key={item.id} className="w-full">
+              <motion.button
+                whileHover={{ scale: 1.02, x: hasChildren ? 2 : 4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  if (hasChildren) {
+                    // toggle expanded
+                    setExpanded((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
+                  } else {
+                    handleMenuClick(item);
+                  }
+                }}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all ${
+                  activeMenu === item.id || (hasChildren && item.children.some((c) => c.id === activeMenu))
+                    ? 'bg-[#2a2a2a] text-white shadow-md'
+                    : 'text-white/70 hover:bg-white/5 hover:text-white'
+                } ${item.id === 'logout' ? 'mt-auto text-rose-200 hover:bg-rose-500/15 hover:text-white' : ''}`}
+              >
+                <item.icon size={20} />
+                <span className="font-medium text-sm">{item.label}</span>
+                {hasChildren ? (
+                  <ChevronDown size={14} className={`ml-auto shrink-0 text-white/45 transition-transform ${expanded[item.id] ? 'rotate-180' : ''}`} />
+                ) : null}
+              </motion.button>
+
+              {hasChildren && expanded[item.id] ? (
+                <div className="mt-2 ml-6 space-y-1">
+                  {item.children.map((child) => (
+                    <motion.button
+                      key={child.id}
+                      whileHover={{ scale: 1.02, x: 6 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleMenuClick(child)}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-all ${
+                        activeMenu === child.id
+                          ? 'bg-[#262626] text-white'
+                          : 'text-white/70 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <child.icon size={16} />
+                      <span className="font-medium">{child.label}</span>
+                    </motion.button>
+                  ))}
+                </div>
+              ) : null}
+
+            </div>
+          );
+        })}
       </nav>
 
       {/* Footer Info */}

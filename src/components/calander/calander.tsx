@@ -153,12 +153,11 @@ export default function Calendar() {
     <section className={darkMode ? 'calendar-shell dark' : 'calendar-shell light'}>
       <div className="calendar-topbar">
         <div>
-          <p className="calendar-eyebrow">
+          <h1 className="calendar-eyebrow">
             <CalendarIcon size={14} />
             School calendar
-          </p>
-          <h1 className="calendar-heading">Events at a glance</h1>
-          <p className="calendar-subtitle">Live school events pulled from the calendar service.</p>
+          </h1>
+          {/* <h1 className="calendar-heading">Events at a glance</h1> */}
         </div>
 
         <div className="calendar-actions">
@@ -338,7 +337,7 @@ export default function Calendar() {
           align-items: center;
           gap: 6px;
           margin: 0 0 6px;
-          font-size: 12px;
+          font-size: 16px;
           text-transform: uppercase;
           letter-spacing: 0.08em;
           color: #64748b;

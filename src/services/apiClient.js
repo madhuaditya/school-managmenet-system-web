@@ -8,7 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://school-project-bac
 
 const apiClient = axios.create({
   baseURL: baseURL,
-  timeout: 18000,
+  timeout: 36000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -16,6 +16,14 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
   try {
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      if (config.headers?.set) {
+        config.headers.set('Content-Type', null);
+      } else if (config.headers) {
+        delete config.headers['Content-Type'];
+      }
+    }
+
     // console.log('API Client initialized with baseURL:', baseURL);
     const rawStore = localStorage.getItem('school-web-auth-store');
     if (!rawStore) return config;
