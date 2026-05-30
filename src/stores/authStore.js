@@ -28,6 +28,24 @@ export const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
 
+      clearAuthData: () => {
+        set({
+          profile: null,
+          authType: null,
+          accessToken: null,
+          refreshToken: null,
+          authExpiresAt: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+
+        try {
+          localStorage.removeItem('school-web-auth-store');
+        } catch {
+          // Ignore storage cleanup failures.
+        }
+      },
+
       loginUser: async ({ token, code }) => {
         set({ isLoading: true });
         try {
@@ -107,15 +125,7 @@ export const useAuthStore = create(
           // Ignore API logout failures and clear local session.
         }
 
-        set({
-          profile: null,
-          authType: null,
-          accessToken: null,
-          refreshToken: null,
-          authExpiresAt: null,
-          isAuthenticated: false,
-          isLoading: false,
-        });
+        get().clearAuthData();
       },
     }),
     {

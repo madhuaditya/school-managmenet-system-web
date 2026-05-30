@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../stores/authStore';
 
 const baseURL = new String(import.meta.env.VITE_BACKEND_URL || 'https://school-project-backend-lwzb.onrender.com').replace(/\/+$/, '');
 
@@ -40,5 +41,28 @@ apiClient.interceptors.request.use((config) => {
 
   return config;
 });
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 444) {
+      try {
+        useAuthStore.getState().clearAuthData?.();
+      } catch {
+        try {
+          localStorage.removeItem('school-web-auth-store');
+        } catch {
+          // Ignore cleanup failures.
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        window.location.replace('/login');
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 export default apiClient;
