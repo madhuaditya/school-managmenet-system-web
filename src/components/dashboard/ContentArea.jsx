@@ -58,6 +58,8 @@ import CalendarManagement from '../dashboard-menus/calendar/CalendarManagement';
 import SchoolHome from '../dashboard-menus/school/SchoolHome';
 import SchoolSubscriptionManager from '../dashboard-menus/school/SchoolSubscriptionManager';
 import SchoolAcademicsManager from '../dashboard-menus/school/SchoolAcademicsManager';
+import AdminDownloadCenter from '../dashboard-menus/downloads/admin/AdminDownloadCenter';
+import TeacherDownloadCenter from '../dashboard-menus/downloads/teacher/TeacherDownloadCenter';
 
 const componentMap = {
   AdminHome,
@@ -109,6 +111,8 @@ const componentMap = {
   SchoolHome,
   SchoolSubscriptionManager,
   SchoolAcademicsManager,
+  AdminDownloadCenter,
+  TeacherDownloadCenter,
 };
 
 const ContentArea = ({
@@ -187,6 +191,8 @@ const ContentArea = ({
     'my-attendance': 'MyAttendance',
     subscription: 'SchoolSubscriptionManager',
     'academics-manager': 'SchoolAcademicsManager',
+    'download-center-admin': 'AdminDownloadCenter',
+    'download-center-teacher': 'TeacherDownloadCenter',
   };
 
   const { role, isSchoolAccount } = useRole();

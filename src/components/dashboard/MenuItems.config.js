@@ -14,6 +14,7 @@ import {
   User,
   LogOut,
   Layers,
+  Download,
 } from 'react-feather';
 
 export const MENU_ITEMS = {
@@ -70,6 +71,9 @@ export const MENU_ITEMS = {
     ]},
     { id: 'calendar', label: 'Calendar', icon: Calendar, component: 'CalendarManagement', path: '/dashboard/calendar' },
     { id: 'broadcast', label: 'Broadcast', icon: Layers, component: 'BroadcastCenter', path: '/dashboard/broadcast' },
+    { id: 'reports', label: 'Reports', icon: Download, children: [
+      { id: 'download-center-admin', label: 'Download Center', icon: Download, component: 'AdminDownloadCenter', path: '/dashboard/download-center' },
+    ]},
     { id: 'alerts', label: 'Alerts', icon: Send, children: [
       { id: 'create-alert', label: 'Create Alert', icon: Send, component: 'CreateAlert', path: '/dashboard/create-alert' },
       { id: 'my-alerts', label: 'My Alerts', icon: Bell, component: 'MyAlerts', path: '/dashboard/my-alerts' },
@@ -93,6 +97,9 @@ export const MENU_ITEMS = {
     { id: 'academics', label: 'Academics', icon: BookOpen, children: [
       { id: 'subjects', label: 'My Subjects', icon: BookOpen, component: 'SubjectsList', path: '/dashboard/subjects' },
       { id: 'exams', label: 'Exams', icon: BookOpen, component: 'ExamManagement', path: '/dashboard/exams' },
+    ]},
+    { id: 'reports', label: 'Reports', icon: Download, children: [
+      { id: 'download-center-teacher', label: 'Download Center', icon: Download, component: 'TeacherDownloadCenter', path: '/dashboard/download-center' },
     ]},
     { id: 'hr', label: 'HR', icon: Calendar, children: [
       { id: 'attendance', label: 'Attendance', icon: Calendar, component: 'AttendanceMarkForm', path: '/dashboard/attendance' },

@@ -68,6 +68,8 @@ function App() {
             { path: 'performance', element: <DashboardContentRoute /> },
             { path: 'subscription', element: <DashboardContentRoute /> },
             { path: 'academics-manager', element: <DashboardContentRoute /> },
+            { path: 'download-center-admin', element: <DashboardContentRoute /> },
+            { path: 'download-center-teacher', element: <DashboardContentRoute /> },
             { path: 'attendance/:id', element: <DashboardContentRoute /> },
             { path: ':menu/:id', element: <DashboardContentRoute /> },
             {path: 'studentsSchool', element: <DashboardContentRoute /> },
