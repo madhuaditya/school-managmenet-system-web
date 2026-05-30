@@ -78,7 +78,7 @@ export const MENU_ITEMS = {
       { id: 'create-alert', label: 'Create Alert', icon: Send, component: 'CreateAlert', path: '/dashboard/create-alert' },
       { id: 'my-alerts', label: 'My Alerts', icon: Bell, component: 'MyAlerts', path: '/dashboard/my-alerts' },
     ]},
-    { id: 'hr', label: 'HR', icon: Calendar, children: [
+    { id: 'hr', label: 'Applications', icon: Calendar, children: [
       { id: 'leave-apply', label: 'Apply Leave', icon: Calendar, component: 'ApplyLeave', path: '/dashboard/leave-apply' },
       { id: 'my-leaves', label: 'My Leaves', icon: Calendar, component: 'MyLeaves', path: '/dashboard/my-leaves' },
       { id: 'leave-review', label: 'Leave Review', icon: Calendar, component: 'LeaveAdminReview', path: '/dashboard/leave-review' },

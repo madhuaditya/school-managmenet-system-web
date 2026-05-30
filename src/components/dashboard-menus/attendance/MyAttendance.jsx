@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'react-feather';
 import { useSearchParams } from 'react-router-dom';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
 import attendanceService from '../../../services/dashboard-services/attendanceService';
 
 const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -31,7 +34,7 @@ const MyAttendance = () => {
   const [error, setError] = useState(null);
 
   const daysInMonth = useMemo(() => new Date(year, month, 0).getDate(), [year, month]);
-  const firstWeekday = useMemo(() => new Date(year, month - 1, 1).getDay(), [year, month]);
+  const calendarInitialDate = useMemo(() => new Date(year, month - 1, 1), [year, month]);
   const today = new Date();
   const isCurrentMonth = year === today.getFullYear() && month === today.getMonth() + 1;
   const consideredDays = isCurrentMonth ? today.getDate() : daysInMonth;
@@ -72,6 +75,34 @@ const MyAttendance = () => {
 
   const totalForChart = Math.max(1, consideredDays);
 
+  function statusColor(status) {
+    if (status === 'present') return '#16a34a';
+    if (status === 'absent') return '#dc2626';
+    if (status === 'leave') return '#d97706';
+    return '#6b7280';
+  }
+
+  const calendarEvents = useMemo(
+    () =>
+      records.map((rec) => {
+        const status = rec.status || 'unmarked';
+        const key = new Date(rec.date).toISOString().slice(0, 10);
+        const label = status.charAt(0).toUpperCase() + status.slice(1);
+
+        return {
+          id: `${key}-${status}`,
+          title: label,
+          start: key,
+          allDay: true,
+          backgroundColor: statusColor(status),
+          borderColor: statusColor(status),
+          textColor: '#ffffff',
+          display: 'block',
+        };
+      }),
+    [records]
+  );
+
   useEffect(() => {
     if (!memberId) {
       setLoading(false);
@@ -100,13 +131,6 @@ const MyAttendance = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const statusColor = (status) => {
-    if (status === 'present') return '#16a34a';
-    if (status === 'absent') return '#dc2626';
-    if (status === 'leave') return '#d97706';
-    return '#6b7280';
   };
 
   const changeMonth = (direction) => {
@@ -206,48 +230,31 @@ const MyAttendance = () => {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="mb-3 text-base font-bold text-slate-900">Calendar</h2>
-
-        <div className="mb-2 grid grid-cols-7 gap-1">
-          {WEEK_DAYS.map((w) => (
-            <div key={w} className="text-center text-xs font-semibold text-slate-500">
-              {w}
-            </div>
-          ))}
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-base font-bold text-slate-900">Calendar</h2>
+          <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
+            <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700">Present</span>
+            <span className="rounded-full bg-rose-100 px-2 py-1 text-rose-700">Absent</span>
+            <span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Leave</span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
-          {Array.from({ length: firstWeekday }).map((_, i) => (
-            <div key={`pad-${i}`} className="h-14" />
-          ))}
-
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const day = i + 1;
-            const key = new Date(year, month - 1, day).toISOString().slice(0, 10);
-            const status = byDate.get(key);
-            const disabled = isCurrentMonth && day > consideredDays;
-
-            return (
-              <div
-                key={key}
-                className="flex h-14 flex-col items-center justify-center rounded-lg border bg-slate-50"
-                style={{ borderColor: statusColor(status), opacity: disabled ? 0.45 : 1 }}
-              >
-                <p className="text-xs font-bold text-slate-700">{day}</p>
-                {!disabled ? (
-                  <>
-                    <span
-                      className="mt-1 inline-block h-2 w-2 rounded-full"
-                      style={{ backgroundColor: statusColor(status) }}
-                    />
-                    <p className="mt-0.5 text-[10px] font-bold text-slate-600">
-                      {status ? status.slice(0, 1).toUpperCase() : 'U'}
-                    </p>
-                  </>
-                ) : null}
-              </div>
-            );
-          })}
+        <div className="attendance-calendar-wrap">
+          <FullCalendar
+            key={`${year}-${month}`}
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            initialDate={calendarInitialDate}
+            headerToolbar={false}
+            events={calendarEvents}
+            height="auto"
+            dayMaxEvents={2}
+            selectable={false}
+            editable={false}
+            eventDisplay="block"
+            fixedWeekCount={false}
+            showNonCurrentDates={false}
+          />
         </div>
       </div>
 
@@ -282,6 +289,20 @@ const MyAttendance = () => {
         </div>
         </div>
       ) : null}
+
+      <style>{`
+        .attendance-calendar-wrap .fc { border: none; }
+        .attendance-calendar-wrap .fc .fc-toolbar-title { font-size: 18px; font-weight: 800; }
+        .attendance-calendar-wrap .fc .fc-daygrid-day-frame { min-height: 92px; }
+        .attendance-calendar-wrap .fc .fc-daygrid-day-number { padding: 6px; font-size: 12px; font-weight: 700; color: #334155; }
+        .attendance-calendar-wrap .fc .fc-day-today { background: rgba(37, 99, 235, 0.08) !important; }
+        .attendance-calendar-wrap .fc .fc-event { border-radius: 10px; padding: 2px 6px; font-size: 11px; font-weight: 700; border: none; margin-top: 2px; }
+        .attendance-calendar-wrap .fc .fc-col-header-cell-cushion { font-size: 12px; font-weight: 700; color: #64748b; }
+        @media (max-width: 768px) {
+          .attendance-calendar-wrap .fc .fc-toolbar-title { font-size: 16px; }
+          .attendance-calendar-wrap .fc .fc-daygrid-day-frame { min-height: 72px; }
+        }
+      `}</style>
     </div>
   );
 };
