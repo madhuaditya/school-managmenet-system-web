@@ -47,6 +47,14 @@ export const salaryManagementService = {
     return response.data;
   },
 
+    getStaffSalaryByMonthByRole: async ({ role, month, year }) => {
+    const response = await apiClient.post(
+      `/api/salary-management/summary/role/month/${month}/${year}`,
+      { role }
+    );
+    return response.data;
+  },
+
   // Get monthly salary matrix for school
   getSalaryMatrixByMonth: async ({ month, year }) => {
     const response = await apiClient.get('/api/salary-management/analytics/matrix-month', {

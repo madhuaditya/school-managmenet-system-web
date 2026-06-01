@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, X, Calendar, Eye } from 'react-feather';
+import { Check, X, Calendar, Eye, Search } from 'react-feather';
 import { useNavigate } from 'react-router-dom';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -19,12 +19,18 @@ const TeachersListNew = ({ setActiveMenu, setTargetId, searchQuery = '' }) => {
   const [loading, setLoading] = useState(true);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [attendanceMap, setAttendanceMap] = useState({});
+  const [teacherSearch, setTeacherSearch] = useState(searchQuery);
+  const [attendanceFilter, setAttendanceFilter] = useState('all');
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [bulkStatus, setBulkStatus] = useState('present');
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
 
   const [feedback, setFeedback] = useState(null);
+
+  useEffect(() => {
+    setTeacherSearch(searchQuery);
+  }, [searchQuery]);
 
   // Load teachers
   useEffect(() => {
@@ -142,17 +148,26 @@ const TeachersListNew = ({ setActiveMenu, setTargetId, searchQuery = '' }) => {
   }, [attendanceMap]);
 
   const filteredTeachers = useMemo(() => {
-    return teachers.filter((teacher) => matchesSearchText(searchQuery, [
-      teacher?.name,
-      teacher?.username,
-      teacher?.email,
-      teacher?.phone,
-      teacher?.user?.name,
-      teacher?.user?.username,
-      teacher?.user?.email,
-      teacher?.user?.phone,
-    ]));
-  }, [teachers, searchQuery]);
+    const combinedSearch = `${searchQuery} ${teacherSearch}`.trim();
+
+    return teachers.filter((teacher) => {
+      const userId = teacher?.user?._id;
+      const status = attendanceMap[userId] || 'not-marked';
+      const statusMatches = attendanceFilter === 'all' || attendanceFilter === status;
+      const textMatches = matchesSearchText(combinedSearch, [
+        teacher?.name,
+        teacher?.username,
+        teacher?.email,
+        teacher?.phone,
+        teacher?.user?.name,
+        teacher?.user?.username,
+        teacher?.user?.email,
+        teacher?.user?.phone,
+      ]);
+
+      return statusMatches && textMatches;
+    });
+  }, [attendanceFilter, attendanceMap, searchQuery, teacherSearch, teachers]);
 
   const ActionCellRenderer = useCallback(
     ({ data }) => {
@@ -247,6 +262,33 @@ const TeachersListNew = ({ setActiveMenu, setTargetId, searchQuery = '' }) => {
         <p className="mt-1 text-sm text-slate-600">{filteredTeachers.length} teachers found</p>
       </div>
 
+      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
+        <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+          <label className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 focus-within:border-blue-500">
+            <Search size={16} className="text-slate-400" />
+            <input
+              type="text"
+              value={teacherSearch}
+              onChange={(e) => setTeacherSearch(e.target.value)}
+              placeholder="Search teacher by name, username, phone, email..."
+              className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+            />
+          </label>
+
+          <select
+            value={attendanceFilter}
+            onChange={(e) => setAttendanceFilter(e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition focus:border-blue-500 focus:outline-none"
+          >
+            <option value="all">All statuses</option>
+            <option value="not-marked">Not marked</option>
+            <option value="present">Present</option>
+            <option value="absent">Absent</option>
+            <option value="leave">Leave</option>
+          </select>
+        </div>
+      </div>
+
       {/* Bulk action toolbar */}
       {filteredTeachers.length > 0 && (
         <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -289,7 +331,9 @@ const TeachersListNew = ({ setActiveMenu, setTargetId, searchQuery = '' }) => {
         <TableSkeleton />
       ) : filteredTeachers.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-600">
-          {searchQuery ? 'No teachers match your search.' : 'No teachers found.'}
+          {teacherSearch || searchQuery || attendanceFilter !== 'all'
+            ? 'No teachers match the selected search or filter.'
+            : 'No teachers found.'}
         </div>
       ) : (
         <div className="ag-theme-quartz" style={{ height: '500px', width: '100%' }}>

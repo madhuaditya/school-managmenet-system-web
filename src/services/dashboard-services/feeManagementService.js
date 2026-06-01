@@ -9,6 +9,14 @@ export const feeManagementService = {
     return response.data;
   },
 
+    getStudentByClassFeeByMonthYear: async ({ classId, month, year }) => {
+    const response = await apiClient.post(
+      `/api/fee-management/summary/class/month/${month}/${year}`,
+      { classId }
+    );
+    return response.data;
+  },
+
   // Create payment for a fee record
   createPayment: async (data) => {
     const response = await apiClient.post('/api/fee-management/payment/create', data);

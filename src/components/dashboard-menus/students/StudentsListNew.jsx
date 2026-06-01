@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Check, X, Calendar, Eye, User, BarChart2, ChevronRight } from 'react-feather';
+import { ArrowLeft, Check, X, Calendar, Eye, User, BarChart2, ChevronRight, Search } from 'react-feather';
 import { useNavigate } from 'react-router-dom';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -28,6 +28,8 @@ const StudentsList = ({ searchQuery = '' }) => {
   // Attendance
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [attendanceMap, setAttendanceMap] = useState({});
+  const [studentSearch, setStudentSearch] = useState(searchQuery);
+  const [attendanceFilter, setAttendanceFilter] = useState('all');
 
   // Bulk actions
   const [selectedRows, setSelectedRows] = useState([]);
@@ -37,6 +39,10 @@ const StudentsList = ({ searchQuery = '' }) => {
   // UI feedback
   const [feedback, setFeedback] = useState(null);
   const activeClassRef = useRef(null);
+
+  useEffect(() => {
+    setStudentSearch(searchQuery);
+  }, [searchQuery]);
 
   // Load classes
   useEffect(() => {
@@ -245,21 +251,30 @@ const StudentsList = ({ searchQuery = '' }) => {
       return [];
     }
 
-    return students.filter((student) => matchesSearchText(searchQuery, [
-      student?.name,
-      student?.username,
-      student?.email,
-      student?.phone,
-      student?.studentId,
-      student?.rollNumber,
-      student?.fatherName,
-      student?.motherName,
-      student?.user?.name,
-      student?.user?.username,
-      student?.user?.email,
-      student?.user?.phone,
-    ]));
-  }, [students, searchQuery, selectedClassId]);
+    const combinedSearch = `${searchQuery} ${studentSearch}`.trim();
+
+    return students.filter((student) => {
+      const userId = student?._id;
+      const status = attendanceMap[userId] || 'not-marked';
+      const statusMatches = attendanceFilter === 'all' || attendanceFilter === status;
+      const textMatches = matchesSearchText(combinedSearch, [
+        student?.name,
+        student?.username,
+        student?.email,
+        student?.phone,
+        student?.studentId,
+        student?.rollNumber,
+        student?.fatherName,
+        student?.motherName,
+        student?.user?.name,
+        student?.user?.username,
+        student?.user?.email,
+        student?.user?.phone,
+      ]);
+
+      return statusMatches && textMatches;
+    });
+  }, [attendanceFilter, attendanceMap, searchQuery, selectedClassId, studentSearch, students]);
 
   // Column definitions
   const columnDefs = [
@@ -453,6 +468,33 @@ const StudentsList = ({ searchQuery = '' }) => {
         </div>
       )}
 
+      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
+        <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+          <label className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 focus-within:border-blue-500">
+            <Search size={16} className="text-slate-400" />
+            <input
+              type="text"
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+              placeholder="Search student by name, ID, username, phone, email..."
+              className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+            />
+          </label>
+
+          <select
+            value={attendanceFilter}
+            onChange={(e) => setAttendanceFilter(e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition focus:border-blue-500 focus:outline-none"
+          >
+            <option value="all">All statuses</option>
+            <option value="not-marked">Not marked</option>
+            <option value="present">Present</option>
+            <option value="absent">Absent</option>
+            <option value="leave">Leave</option>
+          </select>
+        </div>
+      </div>
+
       {/* Bulk action toolbar */}
       {filteredStudents.length > 0 && (
         <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -495,7 +537,9 @@ const StudentsList = ({ searchQuery = '' }) => {
         <TableSkeleton />
       ) : filteredStudents.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-600">
-          {searchQuery ? 'No students match your search.' : 'No students found in this class.'}
+          {studentSearch || searchQuery || attendanceFilter !== 'all'
+            ? 'No students match the selected search or filter.'
+            : 'No students found in this class.'}
         </div>
       ) : (
         <div className="ag-theme-quartz" style={{ height: '500px', width: '100%' }}>

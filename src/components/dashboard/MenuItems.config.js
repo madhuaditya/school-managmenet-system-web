@@ -43,11 +43,17 @@ export const MENU_ITEMS = {
   ],
   admin: [
     { id: 'dashboard', label: 'Dashboard', icon: Home, component: 'AdminHome', path: '/dashboard/dashboard' },
-    { id: 'people', label: 'People', icon: Users, children: [
+    { id: 'mark-attendance', label: 'Mark Attendance', icon: Users, children: [
       { id: 'students', label: 'Students', icon: Users, component: 'StudentsList', path: '/dashboard/students' },
       { id: 'teachers', label: 'Teachers', icon: Users, component: 'TeachersList', path: '/dashboard/teachers' },
       { id: 'admin', label: 'Admin', icon: Users, component: 'AdminList', path: '/dashboard/admin' },
       { id: 'staff', label: 'Staff', icon: Briefcase, component: 'StaffList', path: '/dashboard/staff' },
+    ]},
+     { id: 'people', label: 'People', icon: Users, children: [
+      { id: 'studentsSchool', label: 'Students', icon: Users, component: 'StudentsListSchool', path: '/dashboard/studentsSchool' },
+      { id: 'teachersSchool', label: 'Teachers', icon: Users, component: 'TeachersListSchool', path: '/dashboard/teachersSchool' },
+      { id: 'adminSchool', label: 'Admins', icon: Users, component: 'AdminListSchool', path: '/dashboard/adminSchool' },
+      { id: 'staffSchool', label: 'Staff', icon: Briefcase, component: 'StaffListSchool', path: '/dashboard/staffSchool' },
     ]},
     { id: 'user-actions', label: 'User Actions', icon: UserPlus, children: [
       { id: 'adduser', label: 'Add User', icon: UserPlus, component: 'AddUser', path: '/dashboard/adduser' },

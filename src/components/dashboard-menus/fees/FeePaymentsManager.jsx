@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download } from 'react-feather';
+import { Download, Search } from 'react-feather';
 import { TableSkeleton } from '../_shared/Skeleton';
 import { formatMoney, normalizeMoneyInput } from '../_shared/money';
 import { downloadHtmlAsPdf } from '../../../utils/htmlPdf';
@@ -75,6 +75,9 @@ const FeePaymentsManager = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [viewMode, setViewMode] = useState('list');
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [form, setForm] = useState(initialForm);
 
   useEffect(() => {
@@ -109,6 +112,21 @@ const FeePaymentsManager = () => {
       ),
     [classSummaries]
   );
+
+  const filteredSummaries = useMemo(() => {
+    const query = searchText.trim().toLowerCase();
+
+    return sortedCards.filter((card) => {
+      const statusMatches = statusFilter === 'all' || card.status === statusFilter;
+      const textMatches =
+        !query ||
+        [card.studentName, card.studentId, card.classId, card.status, card?.payments?.[0]?.transactionId]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(query));
+
+      return statusMatches && textMatches;
+    });
+  }, [searchText, sortedCards, statusFilter]);
 
   const currentStudent = useMemo(
     () => students.find((item) => item._id === selectedStudentId) || null,
@@ -174,15 +192,30 @@ const FeePaymentsManager = () => {
   const loadClassSummaries = async () => {
     try {
       setLoadingSummary(true);
+      if(selectedMonth > 12 || selectedMonth < 1) {
+        throw new Error('Invalid month selected. Please select a month between 1 and 12.');
+      }
+      if(selectedYear < 2000 || selectedYear > now.getFullYear() + 4) {
+        throw new Error(`Invalid year selected. Please select a year between 2000 and ${now.getFullYear() + 4}.`);
+      }
+      if(!selectedClassId ) {
+        throw new Error('Please select a class to load summaries.');
+      }
+      const response = await feeManagementService.getStudentByClassFeeByMonthYear({
+        classId: selectedClassId,
+        month: Number(selectedMonth),
+        year: Number(selectedYear),
+      });
+      if (!response?.success) {
+        throw new Error(response?.msg || 'Failed to load fee summaries');
+      }
+
       const results = await Promise.all(
         students.map(async (student) => {
-          const result = await feeManagementService.getStudentFeeByMonthYear({
-            studentId: student._id,
-            month: Number(selectedMonth),
-            year: Number(selectedYear),
-          });
-
-          return { student, summary: result?.success ? result.data : null };
+          // console.log('Finding summary for student:', student._id, student.name);
+          const result = response.data.records.find((record) => record.studentId === student._id);
+          // console.log('Found summary for student:', student._id, result ? 'Yes' : 'No');
+          return { student, summary: result ? result : null };
         })
       );
 
@@ -345,6 +378,157 @@ const FeePaymentsManager = () => {
 
   if (loading) return <TableSkeleton />;
 
+  const renderActionButtons = (item) => (
+    <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={() => setSelectedStudentId(item.studentId)}
+        className={`rounded-lg px-3 py-1 text-xs font-semibold ${
+          selectedStudentId === item.studentId
+            ? 'border border-blue-200 bg-blue-100 text-blue-700'
+            : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
+        }`}
+      >
+        {selectedStudentId === item.studentId ? 'Selected' : 'Select'}
+      </button>
+      <button
+        type="button"
+        onClick={() => openHistory(item.studentId)}
+        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+      >
+        History
+      </button>
+      {item.status !== 'PENDING' ? (
+        <button
+          type="button"
+          onClick={() => downloadCardSlip(item)}
+          disabled={downloadingSlipId === item?.payments?.[0]?._id}
+          className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+          aria-label={`Download fee slip for ${item.studentName}`}
+          title="Download fee slip"
+        >
+          <Download size={14} />
+        </button>
+      ) : null}
+    </div>
+  );
+
+  const renderStatusPill = (status) => (
+    <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusMeta[status]?.badge || statusMeta.PENDING.badge}`}>
+      {status}
+    </span>
+  );
+
+  const renderListView = () => (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-slate-200 p-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-1 items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 focus-within:border-blue-500">
+          <Search size={16} className="text-slate-400" />
+          <input
+            type="text"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder="Search by student, class, status, or transaction id..."
+            className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+          />
+        </div>
+
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+          className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 focus:border-blue-500 focus:outline-none"
+        >
+          <option value="all">All</option>
+          <option value="PENDING">Pending</option>
+          <option value="PARTIAL">Partial</option>
+          <option value="PAID">Paid</option>
+        </select>
+      </div>
+
+      <div className="max-h-130 overflow-auto">
+        <table className="min-w-275 table-fixed divide-y divide-slate-200">
+          <thead className="sticky top-0 z-10 bg-slate-50">
+            <tr>
+              <th className="w-[28%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Student</th>
+              <th className="w-[12%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Class</th>
+              <th className="w-[12%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Status</th>
+              <th className="w-[14%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Expected</th>
+              <th className="w-[14%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Paid</th>
+              <th className="w-[14%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Due</th>
+              <th className="w-[6%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 bg-white">
+            {filteredSummaries.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="px-4 py-8 text-center text-sm text-slate-500">
+                  No fee payment records match the selected search or filter.
+                </td>
+              </tr>
+            ) : (
+              filteredSummaries.map((item) => (
+                <tr
+                  key={item.studentId}
+                  className={selectedStudentId === item.studentId ? 'bg-blue-50/70' : 'hover:bg-slate-50'}
+                >
+                  <td className="px-4 py-3 align-top">
+                    <p className="truncate font-semibold text-slate-900">{item.studentName}</p>
+                    <p className="truncate text-xs text-slate-500">ID: {item.studentId}</p>
+                  </td>
+                  <td className="px-4 py-3 align-top text-sm text-slate-700">{item.classId}</td>
+                  <td className="px-4 py-3 align-top">{renderStatusPill(item.status)}</td>
+                  <td className="px-4 py-3 align-top text-sm text-slate-700">{formatMoney(item.expectedAmount)}</td>
+                  <td className="px-4 py-3 align-top text-sm text-slate-700">{formatMoney(item.paidAmount)}</td>
+                  <td className="px-4 py-3 align-top text-sm text-slate-700">{formatMoney(item.dueAmount)}</td>
+                  <td className="px-4 py-3 align-top">{renderActionButtons(item)}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const renderCardView = () => (
+    <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      {['PENDING', 'PARTIAL', 'PAID'].map((status) => {
+        const items = filteredSummaries.filter((card) => card.status === status);
+
+        return (
+          <div key={status} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 className="mb-3 text-base font-bold text-slate-900">
+              {statusMeta[status].order === 0 ? 'Pending' : statusMeta[status].order === 1 ? 'Partial' : 'Paid'}
+            </h3>
+            <div className="max-h-105 space-y-3 overflow-y-auto pr-1">
+              {items.length === 0 ? (
+                <p className="text-sm text-slate-500">No {status.toLowerCase()} records.</p>
+              ) : (
+                items.map((item) => (
+                  <article key={item.studentId} className={`rounded-xl border p-4 ${statusMeta[item.status].card}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-slate-900">{item.studentName}</p>
+                        <p className="text-xs text-slate-600">Class {item.classId}</p>
+                      </div>
+                      {renderStatusPill(item.status)}
+                    </div>
+                    <div className="mt-3 space-y-1 text-sm text-slate-700">
+                      <p>Expected: {formatMoney(item.expectedAmount)}</p>
+                      <p>Paid: {formatMoney(item.paidAmount)}</p>
+                      <p>Due: {formatMoney(item.dueAmount)}</p>
+                    </div>
+                    <div className="mt-3">{renderActionButtons(item)}</div>
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -354,6 +538,36 @@ const FeePaymentsManager = () => {
 
       {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
       {success ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div> : null}
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Fee Payment Records</h2>
+            <p className="text-sm text-slate-600">Switch between a table view and grouped status cards.</p>
+          </div>
+
+          <div className="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                viewMode === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              List
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('card')}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                viewMode === 'card' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Card
+            </button>
+          </div>
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="mb-4 text-lg font-bold text-slate-900">Select Filters</h2>
@@ -432,73 +646,7 @@ const FeePaymentsManager = () => {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        {['PENDING', 'PARTIAL', 'PAID'].map((status) => {
-          const items = sortedCards.filter((card) => card.status === status);
-
-          return (
-            <div key={status} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h3 className="mb-3 text-base font-bold text-slate-900">
-                {statusMeta[status].order === 0 ? 'Pending' : statusMeta[status].order === 1 ? 'Partial' : 'Paid'}
-              </h3>
-              <div className="max-h-105 space-y-3 overflow-y-auto pr-1">
-                {items.length === 0 ? (
-                  <p className="text-sm text-slate-500">No {status.toLowerCase()} records.</p>
-                ) : (
-                  items.map((item) => (
-                    <article key={item.studentId} className={`rounded-xl border p-4 ${statusMeta[item.status].card}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="font-bold text-slate-900">{item.studentName}</p>
-                          <p className="text-xs text-slate-600">Class {item.classId}</p>
-                        </div>
-                        <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusMeta[item.status].badge}`}>{item.status}</span>
-                      </div>
-                      <div className="mt-3 space-y-1 text-sm text-slate-700">
-                        <p>Expected: {formatMoney(item.expectedAmount)}</p>
-                        <p>Paid: {formatMoney(item.paidAmount)}</p>
-                        <p>Due: {formatMoney(item.dueAmount)}</p>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedStudentId(item.studentId)}
-                          className={`rounded-lg px-3 py-1 text-xs font-semibold ${
-                            selectedStudentId === item.studentId
-                              ? 'border border-blue-200 bg-blue-100 text-blue-700'
-                              : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
-                          }`}
-                        >
-                          {selectedStudentId === item.studentId ? 'Selected' : 'Select'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openHistory(item.studentId)}
-                          className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
-                        >
-                          History
-                        </button>
-                        {item.status !== 'PENDING' ? (
-                          <button
-                            type="button"
-                            onClick={() => downloadCardSlip(item)}
-                            disabled={downloadingSlipId === item?.payments?.[0]?._id}
-                            className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            aria-label={`Download fee slip for ${item.studentName}`}
-                            title="Download fee slip"
-                          >
-                            <Download size={14} />
-                          </button>
-                        ) : null}
-                      </div>
-                    </article>
-                  ))
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </section>
+      {viewMode === 'list' ? renderListView() : renderCardView()}
 
       {selectedStudentId ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
