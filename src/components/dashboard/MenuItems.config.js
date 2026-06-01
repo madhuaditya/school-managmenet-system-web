@@ -21,7 +21,7 @@ export const MENU_ITEMS = {
   school: [
     { id: 'dashboard', label: 'Overview', icon: Home, component: 'SchoolHome', path: '/dashboard/dashboard' },
     { id: 'adduser', label: 'Add Admin', icon: UserPlus, component: 'AddUser', path: '/dashboard/adduser' },
-    { id: 'people', label: 'People', icon: Users, children: [
+    { id: 'people', label: 'Update Profiles', icon: Users, children: [
       { id: 'studentsSchool', label: 'Students', icon: Users, component: 'StudentsListSchool', path: '/dashboard/studentsSchool' },
       { id: 'teachersSchool', label: 'Teachers', icon: Users, component: 'TeachersListSchool', path: '/dashboard/teachersSchool' },
       { id: 'adminSchool', label: 'Admins', icon: Users, component: 'AdminListSchool', path: '/dashboard/adminSchool' },
@@ -49,7 +49,7 @@ export const MENU_ITEMS = {
       { id: 'admin', label: 'Admin', icon: Users, component: 'AdminList', path: '/dashboard/admin' },
       { id: 'staff', label: 'Staff', icon: Briefcase, component: 'StaffList', path: '/dashboard/staff' },
     ]},
-     { id: 'people', label: 'People', icon: Users, children: [
+     { id: 'people', label: 'Update Profiles', icon: Users, children: [
       { id: 'studentsSchool', label: 'Students', icon: Users, component: 'StudentsListSchool', path: '/dashboard/studentsSchool' },
       { id: 'teachersSchool', label: 'Teachers', icon: Users, component: 'TeachersListSchool', path: '/dashboard/teachersSchool' },
       { id: 'adminSchool', label: 'Admins', icon: Users, component: 'AdminListSchool', path: '/dashboard/adminSchool' },
