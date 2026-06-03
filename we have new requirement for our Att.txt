@@ -1,0 +1,569 @@
+we have new requirement for our Attedance System for student 
+#file:students.tsx there to mark attendece we are directly calling the backend API to save the attedendec but due to huge data size it is taking way long time 
+to handle this we jave one implemtation and architecture plan
+```
+
+
+# PHASE 1 — Setup SQLite Queue System
+
+# Step 1 — Install Dependencies
+
+## If Bare React Native
+
+```bash id="63gs7t"
+npm install react-native-quick-sqlite
+npm install react-native-get-random-values
+npm install uuid
+npm install axios
+npm install zustand
+npm install @react-native-community/netinfo
+npm install react-native-background-fetch
+npm install @notifee/react-native
+```
+
+---
+
+# Step 2 — Create SQLite Database
+
+# File Structure
+
+```text id="71h5ai"
+src/
+ ├── database/
+ │    ├── db.ts
+ │    ├── migrations.ts
+ │    └── attendanceQueueRepo.ts
+```
+
+---
+
+# db.ts
+
+```ts id="olzndw"
+import { open } from 'react-native-quick-sqlite';
+
+export const db = open({
+  name: 'school_app.db',
+});
+```
+
+---
+
+# Step 3 — Create Queue Table
+
+# migrations.ts
+
+```ts id="l5z35r"
+import { db } from './db';
+
+export function runMigrations() {
+  db.execute(`
+    CREATE TABLE IF NOT EXISTS attendance_queue (
+      id TEXT PRIMARY KEY,
+      request_id TEXT,
+      class_id TEXT,
+      attendance_date TEXT,
+      payload TEXT,
+      status TEXT,
+      retry_count INTEGER DEFAULT 0,
+      next_retry_at INTEGER DEFAULT 0,
+      created_at INTEGER,
+      updated_at INTEGER
+    );
+  `);
+}
+```
+
+---
+
+# Run Migration On App Start
+
+# App.tsx
+
+```ts id="mj4h2y"
+useEffect(() => {
+  runMigrations();
+}, []);
+```
+
+---
+
+# PHASE 2 — Create Queue Repository
+
+# attendanceQueueRepo.ts
+
+This is VERY important.
+
+Never access SQLite directly from screens.
+
+---
+
+# Insert Queue Item
+
+```ts id="0r6r7t"
+export async function addQueueItem(item) {
+  db.execute(
+    `
+    INSERT INTO attendance_queue (
+      id,
+      request_id,
+      class_id,
+      attendance_date,
+      payload,
+      status,
+      retry_count,
+      created_at,
+      updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    [
+      item.id,
+      item.requestId,
+      item.classId,
+      item.date,
+      JSON.stringify(item.payload),
+      'PENDING',
+      0,
+      Date.now(),
+      Date.now(),
+    ]
+  );
+}
+```
+
+---
+
+# Get Pending Items
+
+```ts id="awjdg5"
+export async function getPendingItems() {
+  const result = db.execute(`
+    SELECT *
+    FROM attendance_queue
+    WHERE status IN ('PENDING', 'FAILED')
+    ORDER BY created_at ASC
+    LIMIT 10
+  `);
+
+  return result.rows?._array || [];
+}
+```
+
+---
+
+# Update Status
+
+```ts id="s5jlwm"
+export async function updateQueueStatus(
+  id,
+  status
+) {
+  db.execute(
+    `
+    UPDATE attendance_queue
+    SET status = ?,
+        updated_at = ?
+    WHERE id = ?
+    `,
+    [status, Date.now(), id]
+  );
+}
+```
+
+---
+
+# Increment Retry
+
+```ts id="7v30tb"
+export async function incrementRetry(
+  id,
+  retryCount,
+  nextRetryAt
+) {
+  db.execute(
+    `
+    UPDATE attendance_queue
+    SET retry_count = ?,
+        next_retry_at = ?,
+        status = 'FAILED'
+    WHERE id = ?
+    `,
+    [retryCount, nextRetryAt, id]
+  );
+}
+```
+
+---
+
+# Delete Synced Items
+
+```ts id="h1s13h"
+export async function deleteSyncedItems() {
+  db.execute(`
+    DELETE FROM attendance_queue
+    WHERE status = 'SYNCED'
+  `);
+}
+```
+
+---
+
+# PHASE 3 — Submit Attendance Flow
+
+# File
+
+```text id="8jq7m6"
+src/services/submitAttendance.ts
+```
+
+---
+
+# submitAttendance()
+
+```ts id="jlwm9s"
+import 'react-native-get-random-values';
+import { v4 as uuid } from 'uuid';
+
+export async function submitAttendance(
+  records,
+  classId,
+  date
+) {
+  const requestId = uuid();
+
+  const payload = {
+    requestId,
+    classId,
+    date,
+    records,
+  };
+
+  await addQueueItem({
+    id: requestId,
+    requestId,
+    classId,
+    date,
+    payload,
+  });
+
+  showToast('Attendance Saved');
+
+  startAttendanceSync();
+}
+```
+
+---
+
+# IMPORTANT UX
+
+Teacher taps submit →
+
+Immediately show:
+
+```text id="mfjlwm"
+Attendance Saved
+```
+
+NOT:
+
+```text id="gw53q9"
+Waiting for upload...
+```
+
+---
+
+# PHASE 4 — API Layer
+
+# attendanceApi.ts
+
+```ts id="0e99yd"
+import axios from 'axios';
+
+export async function uploadAttendance(
+  payload
+) {
+  return axios.put(
+    '/attendance/bulk',
+    payload
+  );
+}
+```
+
+---
+
+# PHASE 5 — Sync Worker
+
+# File
+
+```text id="t6v8qk"
+src/sync/attendanceSyncWorker.ts
+```
+
+---
+
+# Core Sync Engine
+
+```ts id="7ff3ep"
+let isSyncing = false;
+
+export async function startAttendanceSync() {
+
+  if (isSyncing) return;
+
+  isSyncing = true;
+
+  try {
+
+    const pendingItems =
+      await getPendingItems();
+
+    for (const item of pendingItems) {
+
+      try {
+
+        await updateQueueStatus(
+          item.id,
+          'SYNCING'
+        );
+
+        await uploadAttendance(
+          JSON.parse(item.payload)
+        );
+
+        await updateQueueStatus(
+          item.id,
+          'SYNCED'
+        );
+
+      } catch (error) {
+
+        const retryCount =
+          item.retry_count + 1;
+
+        const delay =
+          getRetryDelay(retryCount);
+
+        await incrementRetry(
+          item.id,
+          retryCount,
+          Date.now() + delay
+        );
+      }
+    }
+
+  } finally {
+
+    isSyncing = false;
+  }
+}
+```
+
+---
+
+# PHASE 6 — Retry Delay Logic
+
+# retryPolicy.ts
+
+```ts id="t9v9z6"
+export function getRetryDelay(
+  retryCount
+) {
+  const delays = [
+    5000,
+    15000,
+    30000,
+    60000,
+    300000,
+  ];
+
+  return delays[
+    retryCount - 1
+  ] || 300000;
+}
+```
+
+---
+
+# PHASE 7 — Internet Detection
+
+# networkManager.ts
+
+```ts id="jlwmwn"
+import NetInfo from
+'@react-native-community/netinfo';
+
+NetInfo.addEventListener(state => {
+
+  if (state.isConnected) {
+    startAttendanceSync();
+  }
+
+});
+```
+
+---
+
+# PHASE 8 — Background Sync
+
+Use:
+
+[react-native-background-fetch](https://github.com/transistorsoft/react-native-background-fetch?utm_source=chatgpt.com)
+
+---
+
+# backgroundSync.ts
+
+```ts id="5yw8na"
+import BackgroundFetch
+from 'react-native-background-fetch';
+
+export function configureBackgroundSync() {
+
+  BackgroundFetch.configure(
+    {
+      minimumFetchInterval: 15,
+      stopOnTerminate: false,
+      startOnBoot: true,
+      enableHeadless: true,
+    },
+
+    async (taskId) => {
+
+      await startAttendanceSync();
+
+      BackgroundFetch.finish(taskId);
+    },
+  );
+}
+```
+
+---
+
+# PHASE 9 — Notifications
+
+Use:
+
+[Notifee](https://notifee.app/?utm_source=chatgpt.com)
+
+---
+
+# syncNotifications.ts
+
+## Show Syncing Notification
+
+```ts id="rrc2yq"
+await notifee.displayNotification({
+  title: 'Attendance Sync',
+  body: 'Syncing attendance...',
+  android: {
+    channelId: 'sync',
+    ongoing: true,
+  },
+});
+```
+
+---
+
+# Success Notification
+
+```ts id="m5qvl8"
+await notifee.displayNotification({
+  title: 'Attendance Synced',
+  body: 'All attendance uploaded',
+});
+```
+
+---
+
+# Retry Notification
+
+```ts id="jlwm6y"
+await notifee.displayNotification({
+  title: 'Sync Delayed',
+  body: 'Retrying automatically',
+});
+```
+
+---
+
+# PHASE 10 — App Startup Recovery
+
+# VERY IMPORTANT
+
+If app crashes during syncing:
+
+```text id="hjywjw"
+SYNCING state gets stuck forever
+```
+
+Fix:
+
+On app startup:
+
+```sql id="mvh7jo"
+UPDATE attendance_queue
+SET status = 'PENDING'
+WHERE status = 'SYNCING'
+```
+
+Then restart sync engine.
+
+---
+
+# PHASE 11 — Backend Requirements
+
+Your backend MUST:
+
+✅ support retries
+✅ support duplicate prevention
+✅ support UPSERT
+
+---
+
+# Best MongoDB Strategy
+
+```js id="vfwm4d"
+bulkWrite([
+  {
+    updateOne: {
+      filter: {
+        studentId,
+        date,
+      },
+      update: {
+        $set: {
+          status,
+        },
+      },
+      upsert: true,
+    }
+  }
+]);
+```
+
+---
+
+# FINAL FLOW
+
+```text id="a8z0hn"
+Teacher taps submit
+        ↓
+Attendance saved in SQLite
+        ↓
+Teacher sees success instantly
+        ↓
+Background sync starts
+        ↓
+Notification:
+"Syncing attendance..."
+        ↓
+API upload
+        ↓
+Success:
+  mark synced
+Failure:
+  retry later
+```
+```
+plese take a look and under stand and ask me questiins if you need then start implementaions 
