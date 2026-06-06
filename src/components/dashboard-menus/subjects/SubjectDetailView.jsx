@@ -383,9 +383,9 @@ function SubjectDetailView({ subjectId, setTargetId }) {
                 <p className="text-sm text-slate-500">Select an exam to prefill rows or load the class manually for tests and assignments.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={prepareManualRows} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                {/* <button type="button" onClick={prepareManualRows} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                   <Users size={16} /> Load Manual Rows
-                </button>
+                </button> */}
                 <button type="button" onClick={saveBulkMarks} disabled={saving || loadingTemplate || !bulkRows.length} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
                   <Save size={16} /> {saving ? 'Saving...' : 'Save Bulk Marks'}
                 </button>
