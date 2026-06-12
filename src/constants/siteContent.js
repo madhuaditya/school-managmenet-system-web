@@ -1,5 +1,5 @@
 export const BRAND = {
-  name: 'EduOrbit School Suite',
+  name: 'Star School',
   tagline: 'Smarter operations for modern schools',
   description:
     'A complete school management web system that improves academic workflows, communication, and decision-making.',
@@ -48,16 +48,20 @@ export const HOME_CONTENT = {
   ],
   reviews: [
     {
+      
       name: 'Principal, Horizon Public School',
       text: 'Our team now spends less time on paperwork and more time on student outcomes.',
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmvpC4o7KTxoDJ-HtuqKQuS0hWPbEt01ZZYQ&s',
     },
     {
       name: 'Academic Coordinator, Sunrise Academy',
       text: 'The system helped us align class records and notices in a very structured way.',
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSn-2Yqrc_5oO9bKLBe6hPNYRaapxK1TNxx_g&s',
     },
     {
       name: 'Operations Lead, Bright Future School',
       text: 'Quick, organized, and easy to adopt for every department in our school.',
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCppyLpXLZZxLye9fVeZoV7tMOXnlO7rpBBA&s',
     },
   ],
   benefits: [

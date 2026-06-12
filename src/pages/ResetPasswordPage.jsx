@@ -7,6 +7,7 @@ import { ROUTES } from '../constants/routes';
 const ResetPasswordPage = () => {
   const { token } = useParams();
   const navigate = useNavigate();
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorText, setErrorText] = useState('');
@@ -19,7 +20,7 @@ const ResetPasswordPage = () => {
       return false;
     }
     if (password.length < 6) {
-      setErrorText('Password must be at least 6 characters long');
+      setErrorText('Password must be at least 6 characters');
       return false;
     }
     if (password !== confirmPassword) {
@@ -37,47 +38,60 @@ const ResetPasswordPage = () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
+
     try {
       const result = await resetPasswordApi(token, password);
+
       if (!result?.success) {
         setErrorText(result?.msg || 'Failed to reset password');
         setIsLoading(false);
         return;
       }
-      setSuccessText('Password reset successfully! Redirecting to login...');
+
+      setSuccessText('Password updated successfully');
+
       setTimeout(() => {
         navigate(ROUTES.login, { replace: true });
-      }, 2000);
+      }, 1500);
     } catch (error) {
-      setErrorText(error?.response?.data?.msg || error.message || 'An error occurred');
+      setErrorText(error?.response?.data?.msg || 'Something went wrong');
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 px-4"
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ backgroundColor: '#F5F5F5' }}
     >
-      <motion.div
-        initial={{ scale: 0.95 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.3 }}
-        className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md"
+      <div
+        className="grid w-full max-w-5xl overflow-hidden"
+        style={{
+          gridTemplateColumns: '1fr 1fr',
+          border: '1px solid #E6E6E6',
+          borderRadius: '6px',
+          backgroundColor: '#fff',
+        }}
       >
-        <h1 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-2">
-          Reset Password
-        </h1>
-        <p className="text-center text-gray-600 mb-6">Enter your new password below</p>
 
-        <form onSubmit={handleResetPassword} className="space-y-4">
-          {/* Password Input */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              New Password
-            </label>
+        {/* LEFT SIDE - FORM */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-8"
+        >
+          <h1 className="text-2xl font-bold" style={{ color: '#303841' }}>
+            Reset Password
+          </h1>
+
+          <p className="mt-2 text-sm" style={{ color: '#303841', opacity: 0.7 }}>
+            Create a new secure password for your account
+          </p>
+
+          <form onSubmit={handleResetPassword} className="mt-6 space-y-4">
+
+            {/* NEW PASSWORD */}
             <input
               type="password"
               value={password}
@@ -85,16 +99,19 @@ const ResetPasswordPage = () => {
                 setPassword(e.target.value);
                 setErrorText('');
               }}
-              placeholder="Enter new password"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              placeholder="New password"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #E6E6E6',
+                borderRadius: '6px',
+                outline: 'none',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = '#76ABAE')}
+              onBlur={(e) => (e.target.style.borderColor = '#E6E6E6')}
             />
-          </div>
 
-          {/* Confirm Password Input */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password
-            </label>
+            {/* CONFIRM PASSWORD */}
             <input
               type="password"
               value={confirmPassword}
@@ -102,57 +119,87 @@ const ResetPasswordPage = () => {
                 setConfirmPassword(e.target.value);
                 setErrorText('');
               }}
-              placeholder="Confirm new password"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              placeholder="Confirm password"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #E6E6E6',
+                borderRadius: '6px',
+                outline: 'none',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = '#76ABAE')}
+              onBlur={(e) => (e.target.style.borderColor = '#E6E6E6')}
             />
+
+            {/* ERROR */}
+            {errorText && (
+              <p className="text-sm font-medium" style={{ color: '#FF5722' }}>
+                {errorText}
+              </p>
+            )}
+
+            {/* SUCCESS */}
+            {successText && (
+              <p className="text-sm font-medium" style={{ color: '#76ABAE' }}>
+                {successText}
+              </p>
+            )}
+
+            {/* BUTTON */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-2 text-sm font-semibold transition"
+              style={{
+                backgroundColor: '#303841',
+                color: '#fff',
+                borderRadius: '6px',
+              }}
+            >
+              {isLoading ? 'Updating...' : 'Reset Password'}
+            </button>
+          </form>
+
+          {/* BACK */}
+          <div className="mt-5">
+            <button
+              onClick={() => navigate(ROUTES.login)}
+              className="text-sm font-semibold"
+              style={{ color: '#303841' }}
+            >
+              ← Back to Login
+            </button>
           </div>
+        </motion.section>
 
-          {/* Error Message */}
-          {errorText && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
-            >
-              {errorText}
-            </motion.div>
-          )}
+        {/* RIGHT SIDE - IMAGE PANEL */}
+        <div className="hidden md:block relative">
+          <img
+            src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d"
+            alt="reset password"
+            className="h-full w-full object-cover"
+          />
 
-          {/* Success Message */}
-          {successText && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm"
-            >
-              {successText}
-            </motion.div>
-          )}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(48,56,65,0.35), rgba(48,56,65,0.85))',
+            }}
+          />
 
-          {/* Reset Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition duration-200"
-          >
-            {isLoading ? 'Resetting...' : 'Reset Password'}
-          </motion.button>
-        </form>
-
-        {/* Back to Login */}
-        <div className="text-center mt-6">
-          <p className="text-gray-600">Remember your password?</p>
-          <button
-            onClick={() => navigate(ROUTES.login)}
-            className="text-blue-600 hover:text-blue-700 font-semibold mt-2 transition"
-          >
-            Back to Login
-          </button>
+          <div className="absolute bottom-6 left-6 right-6">
+            <h2 className="text-xl font-bold text-white">
+              Secure Your Account
+            </h2>
+            <p className="text-sm text-white/80 mt-1">
+              Choose a strong password to protect your data
+            </p>
+          </div>
         </div>
-      </motion.div>
-    </motion.div>
+
+      </div>
+    </div>
   );
 };
 

@@ -1,41 +1,125 @@
-import { motion } from 'framer-motion';
-import { APP_LINKS, BRAND } from '../../constants/siteContent';
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BRAND, APP_LINKS } from '../../constants/siteContent';
+const heroImages = [
+  "https://images.unsplash.com/photo-1523240795612-9a054b0db644",
+  "https://images.unsplash.com/photo-1503676260728-1c00da094a0b",
+  "https://images.unsplash.com/photo-1588072432836-e10032774350",
+  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d"
+];
 
 function HeroSection() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % heroImages.length);
+    }, 4000); // change every 4 sec
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-white/80 px-6 py-16 shadow-xl ring-1 ring-cyan-100 backdrop-blur-sm md:px-10">
-      <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-200/60 blur-3xl" />
-      <div className="absolute -bottom-28 -left-20 h-72 w-72 rounded-full bg-blue-200/50 blur-3xl" />
+    <section className="w-full">
 
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative max-w-3xl"
-      >
-        <span className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">
-          School Management Web Platform
-        </span>
-        <h1 className="mt-6 font-heading text-4xl font-extrabold leading-tight text-slate-900 md:text-5xl">
-          {BRAND.name}
-        </h1>
-        <p className="mt-4 text-lg text-slate-700">{BRAND.description}</p>
+      {/* HERO SLIDER */}
+      <div className="relative mt-8  h-[85vh] w-full overflow-hidden">
 
-        <div className="mt-8 flex flex-wrap gap-4">
-          <a
-            href={APP_LINKS.android}
-            className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800"
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={index}
+            src={heroImages[index]}
+            alt="hero"
+            className="absolute inset-0 h-full w-full object-cover"
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+          />
+        </AnimatePresence>
+
+        {/* DARK OVERLAY */}
+        <div
+          className="absolute inset-0"
+          style={{ backgroundColor: 'rgba(48, 56, 65, 0.65)' }}
+        />
+
+        {/* CONTENT */}
+        <div className="absolute inset-0 flex items-center px-6 md:px-10">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-3xl"
           >
-            Download Android App
-          </a>
-          <a
-            href={APP_LINKS.ios}
-            className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-cyan-300"
-          >
-            Download iOS App
-          </a>
+
+            {/* label */}
+            <span
+              className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider"
+              style={{
+                backgroundColor: '#F5F5F5',
+                color: '#303841',
+                borderLeft: '3px solid #76ABAE',
+              }}
+            >
+              School Management Platform
+            </span>
+
+            {/* title */}
+            <h1
+              className="mt-6 text-4xl md:text-5xl font-bold leading-tight"
+              style={{ color: '#fff' }}
+            >
+              {BRAND.name}
+            </h1>
+
+            {/* description */}
+            <p
+              className="mt-4 text-lg"
+              style={{ color: '#fff', opacity: 0.85 }}
+            >
+              {BRAND.description}
+            </p>
+
+            {/* buttons */}
+            <div className="mt-8 flex flex-wrap gap-4">
+
+              <a
+                href={APP_LINKS.android}
+                className="px-5 py-3 text-sm font-semibold"
+                style={{
+                  backgroundColor: '#FF5722',
+                  color: '#fff',
+                  borderRadius: '6px',
+                }}
+              >
+                Download Android App
+              </a>
+
+              <a
+                href={APP_LINKS.ios}
+                className="px-5 py-3 text-sm font-semibold"
+                style={{
+                  backgroundColor: 'transparent',
+                  color: '#fff',
+                  border: '1px solid #76ABAE',
+                  borderRadius: '6px',
+                }}
+              >
+                Download iOS App
+              </a>
+
+            </div>
+
+          </motion.div>
         </div>
-      </motion.div>
+      </div>
+
+      {/* CONTENT BELOW HERO */}
+      <div className="px-6 py-12 md:px-10">
+        {/* existing sections */}
+      </div>
+
     </section>
   );
 }

@@ -22,6 +22,20 @@ function SchoolLogin() {
     return <Navigate to={ROUTES.dashboard} replace />;
   }
 
+  const inputStyle = {
+    width: '100%',
+    padding: '10px 12px',
+    fontSize: '14px',
+    border: '1px solid #E6E6E6',
+    borderRadius: '6px',
+    outline: 'none',
+    color: '#303841',
+  };
+
+  const focusStyle = {
+    borderColor: '#76ABAE',
+  };
+
   const onSubmit = async (event) => {
     event.preventDefault();
     setErrorText('');
@@ -35,115 +49,198 @@ function SchoolLogin() {
       await loginSchool({ email: email.trim(), password });
       navigate(ROUTES.dashboard, { replace: true });
     } catch (error) {
-      setErrorText(error?.response?.data?.msg || error?.message || 'School login failed.');
+      setErrorText(error?.response?.data?.msg || 'School login failed.');
     }
   };
 
   const onForgotPassword = async () => {
     setErrorText('');
+
     const validEmail = /^\S+@\S+\.\S+$/.test(forgotEmail);
 
     if (!validEmail) {
-      setErrorText('Please enter a valid school email.');
+      setErrorText('Enter valid school email.');
       return;
     }
 
     try {
       setSendingForgot(true);
       const result = await forgotSchoolPasswordApi(forgotEmail.trim());
+
       if (!result?.success) {
-        throw new Error(result?.msg || 'Failed to send school reset link');
+        throw new Error(result?.msg || 'Failed to send reset link');
       }
-      window.alert('School password reset link sent.');
+
       setForgotEmail('');
+      alert('Reset link sent to school email');
     } catch (error) {
-      setErrorText(error?.response?.data?.msg || error?.message || 'Failed to send school reset link.');
+      setErrorText(error?.message || 'Failed to send reset link.');
     } finally {
       setSendingForgot(false);
     }
   };
 
   return (
-    <div className="mx-auto max-w-lg py-12">
-      <motion.section
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-200"
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ backgroundColor: '#F5F5F5' }}
+    >
+      <div
+        className="grid w-full max-w-5xl overflow-hidden"
+        style={{
+          gridTemplateColumns: '1fr 1fr',
+          border: '1px solid #E6E6E6',
+          borderRadius: '6px',
+          backgroundColor: '#FFFFFF',
+        }}
       >
-        <h1 className="font-heading text-3xl font-bold text-slate-900">School Login</h1>
-        <p className="mt-2 text-sm text-slate-600">Sign in with your school admin credentials.</p>
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">School Email</span>
+        {/* LEFT IMAGE SIDE */}
+        <div className="hidden md:block relative">
+          <img
+            src="https://images.unsplash.com/photo-1588072432836-e10032774350"
+            alt="school"
+            className="h-full w-full object-cover"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(180deg, rgba(48,56,65,0.6), rgba(48,56,65,0.9))',
+            }}
+          />
+          <div className="absolute bottom-6 left-6 right-6">
+            <h2 className="text-xl font-bold text-white">
+              School Management Portal
+            </h2>
+            <p className="mt-1 text-sm text-white/80">
+              Secure access for administrators and staff
+            </p>
+          </div>
+        </div>
+
+        {/* RIGHT FORM SIDE */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-8"
+        >
+          <h1 className="text-2xl font-bold" style={{ color: '#303841' }}>
+            School Login
+          </h1>
+
+          <p className="mt-2 text-sm" style={{ color: '#303841', opacity: 0.7 }}>
+            Sign in with your school admin credentials.
+          </p>
+
+          <form onSubmit={onSubmit} className="mt-6 space-y-4">
+
+            {/* EMAIL */}
             <input
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="School email"
+              style={inputStyle}
+              onFocus={(e) => Object.assign(e.target.style, focusStyle)}
+              onBlur={(e) => (e.target.style.borderColor = '#E6E6E6')}
             />
-          </label>
 
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Password</span>
+            {/* PASSWORD */}
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-2 pr-20 text-sm outline-none focus:border-cyan-500"
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
+                style={inputStyle}
+                onFocus={(e) => Object.assign(e.target.style, focusStyle)}
+                onBlur={(e) => (e.target.style.borderColor = '#E6E6E6')}
               />
+
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-2 top-2 rounded-md px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
+                className="absolute right-2 top-2 text-xs px-2 py-1"
+                style={{
+                  borderRadius: '4px',
+                  color: '#303841',
+                }}
               >
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
-          </label>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? 'Logging in...' : 'School Login'}
-          </button>
-        </form>
-
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm font-semibold text-slate-800">Forgot Password</p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <input
-              type="email"
-              value={forgotEmail}
-              onChange={(event) => setForgotEmail(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
-              placeholder="Enter school email"
-            />
+            {/* LOGIN BUTTON */}
             <button
-              type="button"
-              onClick={onForgotPassword}
-              disabled={sendingForgot || isLoading}
-              className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-70"
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-2 text-sm font-semibold"
+              style={{
+                backgroundColor: '#303841',
+                color: '#FFFFFF',
+                borderRadius: '6px',
+              }}
             >
-              {sendingForgot ? 'Sending...' : 'Send Reset Link'}
+              {isLoading ? 'Logging in...' : 'School Login'}
             </button>
+          </form>
+
+          {/* FORGOT PASSWORD */}
+          <div
+            className="mt-6 p-4"
+            style={{
+              backgroundColor: '#F5F5F5',
+              border: '1px solid #E6E6E6',
+              borderRadius: '6px',
+            }}
+          >
+            <p className="text-sm font-semibold" style={{ color: '#303841' }}>
+              Forgot Password
+            </p>
+
+            <div className="mt-3 flex gap-2">
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="School email"
+                style={{ ...inputStyle, flex: 1 }}
+              />
+
+              <button
+                onClick={onForgotPassword}
+                disabled={sendingForgot || isLoading}
+                className="px-4 py-2 text-sm font-semibold"
+                style={{
+                  backgroundColor: '#76ABAE',
+                  color: '#FFFFFF',
+                  borderRadius: '6px',
+                }}
+              >
+                {sendingForgot ? 'Sending...' : 'Send'}
+              </button>
+            </div>
           </div>
-        </div>
 
-        {errorText && <p className="mt-4 text-sm font-medium text-red-600">{errorText}</p>}
+          {/* ERROR */}
+          {errorText && (
+            <p className="mt-4 text-sm" style={{ color: '#FF5722' }}>
+              {errorText}
+            </p>
+          )}
 
-        <div className="mt-5 flex items-center justify-between text-sm">
-          <span className="text-slate-600">User account?</span>
-          <Link to={ROUTES.login} className="font-semibold text-cyan-700 hover:text-cyan-600">
-            Go to User Login
-          </Link>
-        </div>
-      </motion.section>
+          {/* SWITCH LOGIN */}
+          <div className="mt-5 text-sm">
+            <Link
+              to={ROUTES.login}
+              style={{ color: '#303841', fontWeight: 600 }}
+            >
+              ← Go to User Login
+            </Link>
+          </div>
+
+        </motion.section>
+      </div>
     </div>
   );
 }

@@ -26,14 +26,24 @@ function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-site-gradient text-slate-800">
-      <Navbar />
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <Outlet />
-      </main>
-      <Footer />
-    </div>
-  );
+  <div
+    className="min-h-screen text-slate-800"
+    style={{ backgroundColor: '#F5F5F5' }}
+  >
+    <Navbar />
+
+    <main
+      className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"
+      style={{
+        color: '#303841',
+      }}
+    >
+      <Outlet />
+    </main>
+
+    <Footer />
+  </div>
+);
 }
 
 export default Layout;

@@ -13,6 +13,21 @@ function FeedbackForm() {
     formState: { errors, isSubmitting },
   } = useForm();
 
+  const inputStyle = {
+    width: '100%',
+    padding: '10px 12px',
+    fontSize: '14px',
+    border: '1px solid #E6E6E6',
+    borderRadius: '6px',
+    outline: 'none',
+    color: '#303841',
+    backgroundColor: '#FFFFFF',
+  };
+
+  const focusStyle = {
+    borderColor: '#76ABAE',
+  };
+
   const onSubmit = async (values) => {
     setResultMessage('');
     setIsError(false);
@@ -28,7 +43,9 @@ function FeedbackForm() {
       reset();
     } catch (error) {
       setIsError(true);
-      setResultMessage(error?.response?.data?.msg || 'Failed to submit feedback. Please try again.');
+      setResultMessage(
+        error?.response?.data?.msg || 'Failed to submit feedback. Please try again.'
+      );
     }
   };
 
@@ -36,23 +53,44 @@ function FeedbackForm() {
     <form
       id="feedback"
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 rounded-2xl bg-white p-5 shadow-md ring-1 ring-slate-200"
+      className="space-y-4"
     >
-      <h3 className="font-heading text-xl font-bold text-slate-900">Feedback Form</h3>
-      <p className="text-sm text-slate-600">Share your experience and suggestions to help us improve.</p>
 
+      <h3 className="text-xl font-bold" style={{ color: '#303841' }}>
+        Feedback Form
+      </h3>
+
+      <p className="text-sm" style={{ color: '#303841', opacity: 0.7 }}>
+        Share your experience and suggestions to help us improve.
+      </p>
+
+      {/* NAME */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">Name</label>
+        <label className="mb-1 block text-sm" style={{ color: '#303841' }}>
+          Name
+        </label>
+
         <input
           type="text"
           {...register('name', { required: 'Name is required' })}
-          className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
+          style={inputStyle}
+          onFocus={(e) => Object.assign(e.target.style, focusStyle)}
+          onBlur={(e) => (e.target.style.borderColor = '#E6E6E6')}
         />
-        {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
+
+        {errors.name && (
+          <p className="mt-1 text-xs" style={{ color: '#FF5722' }}>
+            {errors.name.message}
+          </p>
+        )}
       </div>
 
+      {/* EMAIL */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+        <label className="mb-1 block text-sm" style={{ color: '#303841' }}>
+          Email
+        </label>
+
         <input
           type="email"
           {...register('email', {
@@ -62,16 +100,29 @@ function FeedbackForm() {
               message: 'Enter a valid email address',
             },
           })}
-          className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
+          style={inputStyle}
+          onFocus={(e) => Object.assign(e.target.style, focusStyle)}
+          onBlur={(e) => (e.target.style.borderColor = '#E6E6E6')}
         />
-        {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
+
+        {errors.email && (
+          <p className="mt-1 text-xs" style={{ color: '#FF5722' }}>
+            {errors.email.message}
+          </p>
+        )}
       </div>
 
+      {/* RATING */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">Rating</label>
+        <label className="mb-1 block text-sm" style={{ color: '#303841' }}>
+          Rating
+        </label>
+
         <select
           {...register('rating', { required: 'Please select rating' })}
-          className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
+          style={inputStyle}
+          onFocus={(e) => Object.assign(e.target.style, focusStyle)}
+          onBlur={(e) => (e.target.style.borderColor = '#E6E6E6')}
         >
           <option value="">Select rating</option>
           <option value="5">5 - Excellent</option>
@@ -80,11 +131,20 @@ function FeedbackForm() {
           <option value="2">2 - Fair</option>
           <option value="1">1 - Needs Improvement</option>
         </select>
-        {errors.rating && <p className="mt-1 text-xs text-red-600">{errors.rating.message}</p>}
+
+        {errors.rating && (
+          <p className="mt-1 text-xs" style={{ color: '#FF5722' }}>
+            {errors.rating.message}
+          </p>
+        )}
       </div>
 
+      {/* MESSAGE */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">Feedback Message</label>
+        <label className="mb-1 block text-sm" style={{ color: '#303841' }}>
+          Feedback Message
+        </label>
+
         <textarea
           rows={4}
           {...register('message', {
@@ -94,21 +154,40 @@ function FeedbackForm() {
               message: 'Feedback should be at least 10 characters',
             },
           })}
-          className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
+          style={inputStyle}
+          onFocus={(e) => Object.assign(e.target.style, focusStyle)}
+          onBlur={(e) => (e.target.style.borderColor = '#E6E6E6')}
         />
-        {errors.message && <p className="mt-1 text-xs text-red-600">{errors.message.message}</p>}
+
+        {errors.message && (
+          <p className="mt-1 text-xs" style={{ color: '#FF5722' }}>
+            {errors.message.message}
+          </p>
+        )}
       </div>
 
+      {/* BUTTON */}
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded-xl bg-cyan-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-70"
+        className="px-5 py-2 text-sm font-semibold transition disabled:opacity-60"
+        style={{
+          backgroundColor: '#303841',
+          color: '#ffffff',
+          borderRadius: '6px',
+        }}
       >
         {isSubmitting ? 'Sending...' : 'Submit Feedback'}
       </button>
 
+      {/* RESULT */}
       {resultMessage && (
-        <p className={`text-sm ${isError ? 'text-red-600' : 'text-emerald-600'}`}>
+        <p
+          className="text-sm"
+          style={{
+            color: isError ? '#FF5722' : '#76ABAE',
+          }}
+        >
           {resultMessage}
         </p>
       )}
