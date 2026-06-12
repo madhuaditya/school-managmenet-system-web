@@ -205,7 +205,7 @@ const handleKeyDown = (e, idx) => {
 
 return (
   <div
-    className="min-h-screen mt-5 flex items-center justify-center px-4"
+    className="min-h-screen pt-10 flex items-center justify-center px-1"
     style={{ backgroundColor: '#F5F5F5' }}
   >
     <div
