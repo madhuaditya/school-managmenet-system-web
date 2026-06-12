@@ -66,9 +66,8 @@ const ResetPasswordPage = () => {
       style={{ backgroundColor: '#F5F5F5' }}
     >
       <div
-        className="grid w-full max-w-5xl overflow-hidden"
+       className="grid w-full max-w-5xl overflow-hidden grid-cols-1 md:grid-cols-2"
         style={{
-          gridTemplateColumns: '1fr 1fr',
           border: '1px solid #E6E6E6',
           borderRadius: '6px',
           backgroundColor: '#fff',

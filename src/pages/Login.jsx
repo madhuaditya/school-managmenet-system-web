@@ -61,9 +61,14 @@ function Login() {
       setErrorText('Token is missing. Please try logging in again.');
       return;
     }
-
     if (!otp.trim() ) {
       setErrorText('OTP and token are required.');
+      return;
+    }
+
+   const arrOtp = otp.split('')
+    if (arrOtp.length !== 6 || arrOtp.includes('')) {
+      setErrorText('Enter complete 6-digit OTP');
       return;
     }
 
@@ -77,6 +82,48 @@ function Login() {
       setVerifyingOtp(false);
     }
   }
+
+  const handleOtpChange = (value, idx) => {
+  if (!/^\d*$/.test(value)) return;
+
+  const otpArr = otp.split('');
+  while (otpArr.length < 6) otpArr.push('');
+
+  otpArr[idx] = value.slice(-1);
+
+  const newOtp = otpArr.join('').slice(0, 6);
+  setOtp(newOtp);
+
+  if (value && idx < 5) {
+    inputsRef.current[idx + 1]?.focus();
+  }
+};
+
+const handleKeyDown = (e, idx) => {
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+
+    const otpArr = otp.split('');
+    while (otpArr.length < 6) otpArr.push('');
+
+    if (otpArr[idx]) {
+      otpArr[idx] = '';
+      setOtp(otpArr.join(''));
+    } else if (idx > 0) {
+      inputsRef.current[idx - 1]?.focus();
+      otpArr[idx - 1] = '';
+      setOtp(otpArr.join(''));
+    }
+  }
+
+  if (e.key === 'ArrowLeft' && idx > 0) {
+    inputsRef.current[idx - 1]?.focus();
+  }
+
+  if (e.key === 'ArrowRight' && idx < 5) {
+    inputsRef.current[idx + 1]?.focus();
+  }
+};
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -158,13 +205,12 @@ function Login() {
 
 return (
   <div
-    className="min-h-screen flex items-center justify-center px-4"
+    className="min-h-screen mt-5 flex items-center justify-center px-4"
     style={{ backgroundColor: '#F5F5F5' }}
   >
     <div
-      className="grid w-full max-w-5xl overflow-hidden"
+      className="grid w-full max-w-5xl overflow-hidden grid-cols-1 md:grid-cols-2"
       style={{
-        gridTemplateColumns: '1fr 1fr',
         border: '1px solid #E6E6E6',
         borderRadius: '6px',
         backgroundColor: '#FFFFFF',
@@ -175,7 +221,7 @@ return (
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-8"
+        className=" p-3"
       >
         {!openOtp ? (
           <>
@@ -339,33 +385,27 @@ return (
             <p className="text-sm font-medium" style={{ color: '#303841' }}>
               {otpMessage}
             </p>
+           {/* ERROR */}
+            {errorText && (
+              <p className="mt-4 text-sm font-medium" style={{ color: '#FF5722' }}>
+                {errorText}
+              </p>
+            )}
 
-            <div className="flex gap-3">
-              {Array.from({ length: 6 }).map((_, idx) => {
-                const value = otp.split('')[idx] || '';
-
-                return (
-                  <input
-                    key={idx}
-                    value={value}
-                    onChange={(e) => {
-                      const digit = e.target.value.replace(/\D/g, '');
-                      const arr = otp.split('');
-                      arr[idx] = digit;
-                      setOtp(arr.join('').slice(0, 6));
-                    }}
-                    style={{
-                      width: '52px',
-                      height: '52px',
-                      textAlign: 'center',
-                      border: '1px solid #E6E6E6',
-                      borderRadius: '6px',
-                      fontSize: '18px',
-                    }}
-                  />
-                );
-              })}
-            </div>
+              <div className="flex gap-2 sm:gap-3 flex-wrap justify-center">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <input
+                key={idx}
+                ref={(el) => (inputsRef.current[idx] = el)}
+                value={otp[idx] || ''}
+                onChange={(e) => handleOtpChange(e.target.value, idx)}
+                onKeyDown={(e) => handleKeyDown(e, idx)}
+                inputMode="numeric"
+                maxLength={1}
+                className="w-11 h-11 sm:w-12 sm:h-12 text-center border border-slate-300 rounded-md text-lg focus:border-[#76ABAE] outline-none"
+              />
+            ))}
+          </div>
 
             <div className="flex w-full gap-3">
               <button
@@ -402,7 +442,7 @@ return (
       </motion.section>
 
       {/* RIGHT SIDE - IMAGE */}
-      <div className="hidden md:block relative">
+      <div className="relative hidden md:block">
         <img
           src="https://images.unsplash.com/photo-1523240795612-9a054b0db644"
           alt="user login"
