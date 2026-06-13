@@ -136,3 +136,30 @@
     gap: 70px;
   }
 }
+
+.browser-frame {
+  background: white;
+  border: 1px solid #E6E6E6;
+  border-radius: 8px;
+  overflow: hidden;
+
+  box-shadow:
+    0 25px 60px rgba(48,56,65,0.12);
+}
+
+.browser-header {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  background: #F5F5F5;
+  border-bottom: 1px solid #E6E6E6;
+}
+
+.browser-header span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #76ABAE;
+}

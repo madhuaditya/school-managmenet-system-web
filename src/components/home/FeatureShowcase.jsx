@@ -6,14 +6,14 @@ const features = [
     image: '/dashboard page.png',
     description:
       'Get complete school insights from a centralized dashboard.',
-      vertical: true,
+    vertical: true,
   },
   {
     title: 'Student Management',
     image: '/student list.png',
     description:
       'Manage students, profiles, records, and attendance efficiently.',
-      vertical: true,
+    vertical: true,
   },
   {
     title: 'Attendance Tracking',
@@ -80,34 +80,47 @@ function FeatureShowcase() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className={`feature-row ${
-              index % 2 === 0 ? '' : 'reverse'
-            }`}
+            className={`feature-row ${index % 2 === 0 ? '' : 'reverse'
+              }`}
           >
             <div className="feature-content">
-
               <div className="feature-line" />
-
               <h3>{feature.title}</h3>
-
               <p>{feature.description}</p>
-
             </div>
-
             <motion.div
-              whileHover={{
-                y: -8,
-              }}
-              transition={{
-                duration: 0.25,
-              }}
-              className="feature-image-wrapper"
-            >
-             <img
-                src={feature.image}
-                alt={feature.title}
-                className={`feature-image ${feature.vertical ? 'vertical' : ''}`}
+  initial={{
+    opacity: 0,
+    x: index % 2 === 0 ? -120 : 120,
+    scale: 0.92,
+  }}
+  whileInView={{
+    opacity: 1,
+    x: 0,
+    scale: 1,
+  }}
+  viewport={{ once: true, amount: 0.3 }}
+  transition={{
+    duration: 0.8,
+    ease: 'easeOut',
+  }}
+  whileHover={{
+    y: -8,
+  }}
+  className="feature-image-wrapper"
+>
+              <div className="browser-frame">
+                <div className="browser-header">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <img
+                  src={feature.image}
+                  alt={feature.title}
+                  className={`feature-image ${feature.vertical ? 'vertical' : ''}`}
                 />
+              </div>
             </motion.div>
           </motion.div>
         ))}
