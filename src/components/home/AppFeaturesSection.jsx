@@ -111,11 +111,11 @@ const mobileFeatures = [
   },
   {
     title: 'Student Attendance Overview',
-    image: '/Phone view studetent attanances.jpg',
+    image: '/Phone  view studetent attanances.jpg',
   },
   {
     title: 'Student Performance Analytics',
-    image: '/Phone stundeant perfromaces.jpg',
+    image: '/Phone  stundeant perfromaces.jpg',
   },
   {
     title: 'Add Student Marks',
