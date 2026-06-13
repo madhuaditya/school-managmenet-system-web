@@ -2,7 +2,7 @@ export const BRAND = {
   name: 'Star School',
   tagline: 'Smarter operations for modern schools',
   description:
-    'A complete school management web system that improves academic workflows, communication, and decision-making.',
+    'A complete school management system that improves academic workflows, communication, and decision-making.',
 };
 
 export const CONTACT_DETAILS = {
@@ -13,7 +13,7 @@ export const CONTACT_DETAILS = {
 };
 
 export const APP_LINKS = {
-  android: 'https://expo.dev/artifacts/eas/eJoGtv3GsHJWDJzQEmv8yc.apk',
+  android: 'https://expo.dev/artifacts/eas/6Gmqfxn1RRZ6yAUeLBxdxuofp7JfoOZiK2uxAgZcbsk.apk',
   ios: '#',
 };
 

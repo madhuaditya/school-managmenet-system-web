@@ -5,7 +5,7 @@ import { BRAND } from '../../constants/siteContent';
 import { ROUTES } from '../../constants/routes';
 import { useAuthStore } from '../../stores/authStore';
 import companyLogo from '/comlogo.png' // '/public/comlogo.png' // '../../../public/comlogo.png'
-
+import Logo from '../../utils/Logo'
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -28,7 +28,8 @@ function Navbar() {
 
         {/* LEFT: LOGO */}
         <Link to={ROUTES.home} className="flex items-center gap-2">
-          <img className='h-13' src={companyLogo} alt="Company" />
+          {/* <img className='h-13' src={companyLogo} alt="Company" /> */}
+          <Logo size={45} />
           <div>
             <p className="text-lg font-bold text-[#303841]">
               {BRAND.name}

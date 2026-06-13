@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { BRAND, CONTACT_DETAILS } from '../../constants/siteContent';
-
+import Logo from '../../utils/Logo'
 function Footer() {
   return (
     <footer
@@ -11,9 +11,11 @@ function Footer() {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-3 lg:px-8">
 
         {/* BRAND */}
+     
         <section>
-          <h3 className="text-xl font-bold text-white">
-            {BRAND.name}
+            
+          <h3 className="flex gap-2 text-xl font-bold text-white">
+             <Logo size={30} bgColor={'#ffffff'} /> {BRAND.name}
           </h3>
 
           <p className="mt-2 text-sm leading-relaxed text-white/70">
