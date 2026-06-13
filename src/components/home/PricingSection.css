@@ -214,3 +214,22 @@
     display: none;
   }
 }
+
+.hero-download-btn:hover {
+  transform: translateY(-2px);
+}
+
+.hero-modal-card {
+  animation: modalFloat 0.3s ease;
+}
+
+@keyframes modalFloat {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

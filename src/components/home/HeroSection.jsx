@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BRAND, APP_LINKS } from '../../constants/siteContent';
+import './PricingSection.css'
 const heroImages = [
   "https://images.unsplash.com/photo-1523240795612-9a054b0db644",
   "https://images.unsplash.com/photo-1503676260728-1c00da094a0b",
@@ -10,6 +11,8 @@ const heroImages = [
 
 function HeroSection() {
   const [index, setIndex] = useState(0);
+  const [downloadModal, setDownloadModal] = useState(null);
+// "android" | "ios" | null
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -84,7 +87,7 @@ function HeroSection() {
             {/* buttons */}
             <div className="mt-8 flex flex-wrap gap-4">
 
-              <a
+              {/* <a
                 href={APP_LINKS.android}
                 className="px-5 py-3 text-sm font-semibold"
                 style={{
@@ -107,8 +110,31 @@ function HeroSection() {
                 }}
               >
                 Download iOS App
-              </a>
+              </a> */}
+          <button
+            onClick={() => setDownloadModal('android')}
+            className="px-5 py-3 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5"
+            style={{
+              backgroundColor: '#FF5722',
+              color: '#fff',
+              borderRadius: '6px',
+            }}
+          >
+            Download Android App
+          </button>
 
+          <button
+            onClick={() => setDownloadModal('ios')}
+            className="px-5 py-3 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5"
+            style={{
+              backgroundColor: 'transparent',
+              color: '#fff',
+              border: '1px solid #76ABAE',
+              borderRadius: '6px',
+            }}
+          >
+            Download iOS App
+          </button>
             </div>
 
           </motion.div>
@@ -119,6 +145,160 @@ function HeroSection() {
       <div className="px-6 py-12 md:px-10">
         {/* existing sections */}
       </div>
+
+      <AnimatePresence>
+  {downloadModal && (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50"
+        style={{
+          background: 'rgba(48,56,65,0.72)',
+          backdropFilter: 'blur(4px)',
+        }}
+        onClick={() => setDownloadModal(null)}
+      />
+
+      <motion.div
+        initial={{
+          opacity: 0,
+          y: 30,
+          scale: 0.96,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          scale: 1,
+        }}
+        exit={{
+          opacity: 0,
+          y: 30,
+          scale: 0.96,
+        }}
+        transition={{
+          duration: 0.25,
+        }}
+        className="fixed left-1/2 top-1/2 z-50 w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2"
+      >
+        <div
+          className="overflow-hidden"
+          style={{
+            background: '#FFFFFF',
+            borderRadius: '8px',
+            border: '1px solid #E6E6E6',
+            boxShadow:
+              '0 30px 60px rgba(0,0,0,0.15)',
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              background:
+                'linear-gradient(135deg,#303841,#3d4952)',
+              padding: '20px',
+            }}
+          >
+            {/* <div
+              style={{
+                width: 44,
+                height: 44,
+                background: '#76ABAE',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 6,
+                color: '#fff',
+                fontSize: 20,
+              }}
+            >
+              📱
+            </div> */}
+
+            <h3
+              className="mt-4 text-xl font-bold"
+              style={{ color: '#fff' }}
+            >
+              {downloadModal === 'android'
+                ? 'Download Android App'
+                : 'iOS App'}
+            </h3>
+          </div>
+
+          {/* Body */}
+          <div className="p-6">
+
+            {downloadModal === 'android' ? (
+              <>
+                <p
+                  style={{
+                    color: '#303841',
+                    lineHeight: 1.7,
+                  }}
+                >
+                  Download the School Management App and
+                  manage attendance, fees, payroll,
+                  students and alerts directly from your phone.
+                </p>
+
+                <a
+                  href={APP_LINKS.android}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-6 block text-center py-3 font-semibold transition"
+                  style={{
+                    background: '#FF5722',
+                    color: '#fff',
+                    borderRadius: 6,
+                  }}
+                >
+                  Download Now
+                </a>
+              </>
+            ) : (
+              <>
+                <p
+                  style={{
+                    color: '#303841',
+                    lineHeight: 1.7,
+                  }}
+                >
+                  The iOS application is currently under
+                  development and will be available soon.
+                </p>
+
+                <div
+                  className="mt-6 text-center py-3 font-semibold"
+                  style={{
+                    background: '#F5F5F5',
+                    color: '#303841',
+                    border: '1px solid #76ABAE',
+                    borderRadius: 6,
+                  }}
+                >
+                  Coming Soon
+                </div>
+              </>
+            )}
+
+            <button
+              onClick={() => setDownloadModal(null)}
+              className="mt-4 w-full py-3 font-semibold transition"
+              style={{
+                border: '1px solid #E6E6E6',
+                color: '#303841',
+                borderRadius: 6,
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </>
+  )}
+</AnimatePresence>
 
     </section>
   );
