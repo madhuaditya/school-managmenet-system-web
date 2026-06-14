@@ -6,14 +6,14 @@ const features = [
     image: '/dashboard page.png',
     description:
       'Get complete school insights from a centralized dashboard.',
-    vertical: true,
+    // vertical: true,
   },
   {
     title: 'Student Management',
     image: '/student list.png',
     description:
       'Manage students, profiles, records, and attendance efficiently.',
-    vertical: true,
+    // vertical: true,
   },
   {
     title: 'Attendance Tracking',
@@ -108,18 +108,49 @@ function FeatureShowcase() {
                 y: -8,
               }}
               className="feature-image-wrapper" >
-              <div className="browser-frame">
+              {/* <div className="browser-frame">
                 <div className="browser-header">
-                  <span />
-                  <span />
-                  <span />
+                  <span className='bg-red-300' />
+                  <span className='bg-yellow' />
+                  <span className='bg-green' />
                 </div>
                 <img
                   src={feature.image}
                   alt={feature.title}
                   className={`feature-image ${feature.vertical ? 'vertical' : ''}`}
                 />
-              </div>
+              </div> */}
+
+        <div className="safari-frame">
+          <div className="safari-header">
+
+            {/* traffic lights */}
+            <div className="safari-controls">
+              <span className="dot red" />
+              <span className="dot yellow" />
+              <span className="dot green" />
+            </div>
+
+            <div className="safari-url">
+              https://school.sgvra.in/#/dashboard
+            </div>
+            <div className="safari-actions">
+              <span />
+              <span />
+              <span />
+            </div>
+
+          </div>
+
+          <div className="safari-body">
+            <img
+              src={feature.image}
+              alt={feature.title}
+              className={`safari-image ${feature.vertical ? 'vertical' : ''}`}
+            />
+          </div>
+        </div>
+
             </motion.div>
           </motion.div>
         ))}

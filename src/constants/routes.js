@@ -10,6 +10,7 @@ export const ROUTES = {
   dashboardDefault: '/dashboard/dashboard',
   studentInfo: '/dashboard/students/:id',
   studentPerformance: '/dashboard/performance/:id',
+  policies : '/policies/quick-start'
 };
 
 export const getDashboardMenuRoute = (menuId) => `/dashboard/${menuId}`;

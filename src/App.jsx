@@ -12,6 +12,7 @@ import SalaryPaymentHistoryPage from './pages/SalaryPaymentHistoryPage';
 import FeePaymentHistoryPage from './pages/FeePaymentHistoryPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import SchoolResetPasswordPage from './pages/SchoolResetPasswordPage';
+import ErpInfoPage from './components/policies/PoliiesParentSection'
 import NotFound from './pages/NotFound';
 import { ROUTES } from './constants/routes';
 import './App.css'
@@ -83,6 +84,7 @@ function App() {
     }, 
     { path: ROUTES.resetPassword, element: <ResetPasswordPage /> },
     { path: '/home', element: <Navigate to={ROUTES.home} replace /> },
+    { path: '/policies/:section', element: <ErpInfoPage /> },
     { path: '*', element: <NotFound /> },
   ]);
 }

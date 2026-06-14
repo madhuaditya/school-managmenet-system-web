@@ -188,6 +188,51 @@
   background: #FF5722;
 }
 
+.pricing-trial-banner {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+
+  margin: 20px 0;
+  padding: 14px 16px;
+
+  background: #F5F5F5;
+  border-left: 4px solid #76ABAE;
+  border: 1px solid #E6E6E6;
+
+  border-radius: 10px;
+
+  box-shadow: 0 10px 25px rgba(48,56,65,0.06);
+
+  animation: floatSoft 4s ease-in-out infinite;
+}
+
+.pricing-trial-banner h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #303841;
+  font-weight: 700;
+}
+
+.pricing-trial-banner p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #5d646b;
+  line-height: 1.5;
+}
+
+.trial-icon {
+  font-size: 20px;
+  margin-top: 2px;
+}
+
+/* subtle floating animation */
+@keyframes floatSoft {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}
+
 @keyframes floatCard {
   0%,
   100% {

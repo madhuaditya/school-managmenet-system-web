@@ -60,6 +60,24 @@ function PricingSection() {
             student management and much more.
           </p>
 
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="pricing-trial-banner"
+            >
+            <div className="trial-icon">🎉</div>
+
+            <div>
+            <h4>Join Us – 6 Month Free Trial</h4>
+            <p>
+                Explore full school ERP features with no upfront cost.  
+                Start using attendance, fees, exams, and mobile app instantly.
+            </p>
+            </div>
+            </motion.div>
+
           <div className="pricing-card">
 
             <div className="pricing-card-top">

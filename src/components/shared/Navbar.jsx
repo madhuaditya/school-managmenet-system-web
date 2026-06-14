@@ -14,6 +14,7 @@ function Navbar() {
     { label: 'Home', to: ROUTES.home },
     { label: 'About Us', to: ROUTES.about },
     { label: 'Contact Us', to: ROUTES.contact },
+    { label: 'Policies', to: ROUTES.policies },
     ...(isAuthenticated
       ? [{ label: 'Dashboard', to: ROUTES.dashboard }]
       : [{ label: 'Login', to: ROUTES.login }]),

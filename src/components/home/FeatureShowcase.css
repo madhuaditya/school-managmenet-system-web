@@ -89,7 +89,7 @@
   content: '';
   position: absolute;
   inset: -15px;
-  background: rgba(118,171,174,0.15);
+  /* background: rgba(118,171,174,0.15); */
   z-index: 0;
 }
 
@@ -157,9 +157,116 @@
   border-bottom: 1px solid #E6E6E6;
 }
 
-.browser-header span {
+.browser-header span{
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: #76ABAE;
+}
+.browser-header span:nth-child(1) {
+  background: #cf1010;
+}
+.browser-header span:nth-child(2) {
+  background: #f0fc09;
+}
+.browser-header span:nth-child(3) {
+  background: #04b518;
+}
+
+.safari-frame {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+
+  background: #ffffff;
+  border: 1px solid #E6E6E6;
+
+  box-shadow:
+    0 25px 60px rgba(48,56,65,0.12);
+}
+
+/* HEADER */
+.safari-header {
+  height: 40px;
+  background: #f5f5f5;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 12px;
+
+  border-bottom: 1px solid #E6E6E6;
+}
+
+/* traffic lights */
+.safari-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.safari-controls .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.safari-controls .red {
+  background: #ff5f57;
+}
+
+.safari-controls .yellow {
+  background: #febc2e;
+}
+
+.safari-controls .green {
+  background: #28c840;
+}
+
+/* URL bar */
+.safari-url {
+  flex: 1;
+  margin: 0 5px;
+
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+
+  background: #ffffff;
+  padding: 6px 10px;
+  border-radius: 8px;
+
+  border: 1px solid #e5e5e5;
+}
+
+/* right actions (fake) */
+.safari-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.safari-actions span {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #cbd5e1;
+}
+
+/* BODY */
+.safari-body {
+  background: #fff;
+}
+
+.safari-image {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  object-position: top;
+}
+
+/* vertical screenshots */
+.safari-image.vertical {
+  height: 520px;
+  object-fit: contain;
+  background: #fafafa;
 }
