@@ -89,26 +89,25 @@ function FeatureShowcase() {
               <p>{feature.description}</p>
             </div>
             <motion.div
-  initial={{
-    opacity: 0,
-    x: index % 2 === 0 ? -120 : 120,
-    scale: 0.92,
-  }}
-  whileInView={{
-    opacity: 1,
-    x: 0,
-    scale: 1,
-  }}
-  viewport={{ once: true, amount: 0.3 }}
-  transition={{
-    duration: 0.8,
-    ease: 'easeOut',
-  }}
-  whileHover={{
-    y: -8,
-  }}
-  className="feature-image-wrapper"
->
+              initial={{
+                opacity: 0,
+                x: index % 2 === 0 ? -120 : 120,
+                scale: 0.92,
+              }}
+              whileInView={{
+                opacity: 1,
+                x: 0,
+                scale: 1,
+              }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{
+                duration: 0.8,
+                ease: 'easeOut',
+              }}
+              whileHover={{
+                y: -8,
+              }}
+              className="feature-image-wrapper" >
               <div className="browser-frame">
                 <div className="browser-header">
                   <span />

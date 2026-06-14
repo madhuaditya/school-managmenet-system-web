@@ -14,6 +14,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import SchoolResetPasswordPage from './pages/SchoolResetPasswordPage';
 import NotFound from './pages/NotFound';
 import { ROUTES } from './constants/routes';
+import './App.css'
 
 function App() {
   return useRoutes([
