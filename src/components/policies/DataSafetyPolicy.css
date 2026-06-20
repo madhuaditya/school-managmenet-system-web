@@ -1,0 +1,147 @@
+/* Container & Background */
+.legal-page-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #333;
+}
+
+/* Header Styles */
+.legal-header {
+  text-align: center;
+  margin-bottom: 50px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.legal-badge {
+  display: inline-block;
+  background-color: #e0f2fe;
+  color: #0284c7;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+.legal-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  color: #111;
+}
+
+.last-updated {
+  font-size: 0.95rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* Main Layout (Sidebar + Content) */
+.legal-content-layout {
+  display: flex;
+  gap: 50px;
+  align-items: flex-start;
+}
+
+/* Sticky Sidebar (Table of Contents) */
+.legal-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.sticky-toc {
+  position: sticky;
+  top: 40px; /* Distance from top of screen when scrolling */
+  background: #fafafa;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #eaeaea;
+}
+
+.sticky-toc h3 {
+  font-size: 1.1rem;
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #111;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sticky-toc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sticky-toc li {
+  margin-bottom: 12px;
+}
+
+.sticky-toc a {
+  text-decoration: none;
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  display: block;
+  transition: color 0.2s ease;
+}
+
+.sticky-toc a:hover {
+  color: #0284c7;
+  font-weight: 500;
+}
+
+/* Legal Document Content */
+.legal-document {
+  flex-grow: 1;
+  max-width: 800px; /* Constrain width for optimal reading */
+}
+
+.legal-section {
+  margin-bottom: 40px;
+  scroll-margin-top: 40px; /* Prevents anchor links from hiding under fixed navbars */
+}
+
+.legal-section h2 {
+  font-size: 1.75rem;
+  color: #111;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.legal-section p {
+  font-size: 1.05rem;
+  line-height: 1.8; /* Generous line height for long text */
+  color: #444;
+  margin-bottom: 20px;
+  text-align: justify; /* Gives it that official document look */
+}
+
+.legal-section hr {
+  border: 0;
+  height: 1px;
+  background: #eaeaea;
+  margin: 40px 0 0 0;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .legal-content-layout {
+    flex-direction: column;
+  }
+
+  .legal-sidebar {
+    width: 100%;
+    margin-bottom: 40px;
+  }
+
+  .sticky-toc {
+    position: relative;
+    top: 0;
+  }
+}
