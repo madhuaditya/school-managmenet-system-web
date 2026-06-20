@@ -259,7 +259,7 @@ const MyAttendance = () => {
       </div>
 
       <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="mb-2 text-base font-bold text-slate-900">API Summary</h2>
+        <h2 className="mb-2 text-base font-bold text-slate-900">Summary</h2>
         <p className="text-sm text-slate-600">Total Marked: {summary?.total ?? computed.marked}</p>
         <p className="text-sm text-slate-600">Present: {summary?.present ?? computed.present}</p>
         <p className="text-sm text-slate-600">Absent: {summary?.absent ?? computed.absent}</p>
